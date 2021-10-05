@@ -1,4 +1,4 @@
-clear all;
+clearvars;
 close all;
 
 %This code will simply describe a general protein diffusing around on a
