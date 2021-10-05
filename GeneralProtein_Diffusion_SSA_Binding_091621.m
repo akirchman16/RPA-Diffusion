@@ -72,7 +72,7 @@ for i = 1:Iterations
     if a_f(i) > rand*a_0(i) %a forward reaction occurs
         eventB = 0;
         while ~eventB   %repeats until a binding occurs
-            SpotB = randsample(Locations,1,true,BindProb(i,1:N-2));  %random location on lattice is chosen
+            SpotB = randsample(Locations,1,true,BindProb(i,1:N-n+1))+1;  %random location on lattice is chosen
             if DNA(SpotB:SpotB+(n-1)) == 0   %checks if location is free
                DNA(SpotB:SpotB+(n-1)) = 1;   %binds protein to location
                BoundAtSpot(SpotB) = 1;  %stores locatin in BoundAtSpot
@@ -110,25 +110,47 @@ for i = 1:Iterations
     CurrentBound = find(BoundAtSpot == 1);
     for k = 1:numel(find(BoundAtSpot == 1)) %check each bound protein for diffusion possibilities
         BoundProtein = CurrentBound(k);
-        if DNA(BoundProtein-1) == 0 & DNA(BoundProtein+n:BoundProtein+n+(n-1)) == 0    %if diffusion is possible in both directions...
-            if rand <= Diffusion_Prob  %check diffusion probability
-                DNA(BoundProtein:BoundProtein+(n-1)) = 0;
-                1 = [3 4];
-                if rand <= Left_Prob    %check diffusing to right
-                    DNA(BoundProtein-1:BoundProtein+(n-1)-1) = 1;    %protein diffuses to the left
-                else
-                    DNA(BoundProtein+1:BoundProtein+n) = 1; %protein diffuses to the right
-                end
+        if (DNA(BoundProtein-1) == 0 & DNA(BoundProtein+n:BoundProtein+n) ~= 0) | BoundProtein == N+2-n    %if diffusion is only possible to the left...
+            if BoundProtein == 2    %protein bound at position 2 with protein to the right cannot move
+                R = 1;  %makes it so no diffusion can occur
+            else
+                R = rand;
             end
-        elseif DNA(BoundProtein-1) == 0 & DNA(BoundProtein+n:BoundProtein+n+(n-1)) ~= 0    %if diffusion is only possible to the left...
-            if rand <= Diffusion_Prob   %check diffusion probability
-                DNA(BoundProtein:BoundProtein+(n-1)) = 0;
+            if R <= Diffusion_Prob   %check diffusion probability
+                DNA(BoundProtein:BoundProtein+(n-1)) = 0;   %clears protein from current location
                 DNA(BoundProtein-1:BoundProtein+(n-1)-1) = 1;   %protein diffuses to the left
+                CurrentBound(k) = CurrentBound(k)-1;    %updates CurrentBound list
+                BoundAtSpot(BoundProtein) = 0;  %updates BoundAtSpot record
+                BoundAtSpot(BoundProtein-1) = 1;
             end
-        elseif DNA(BoundProtein-1) ~= 0 & DNA(BoundProtein+n:BoundProtein+n+(n-1)) == 0    %if diffusion is only possible to the right...
+        elseif (DNA(BoundProtein-1) ~= 0 & DNA(BoundProtein+n:BoundProtein+n) == 0) | BoundProtein == 2   %if diffusion is only possible to the right...
+            if BoundProtein == N+2-n    %protein bound at position N+2-n with protein to the left cannot move
+                R = 1;  %makes it so no diffusion can occur
+            else
+                R = rand;
+            end
             if rand <= Diffusion_Prob   %check diffusion probability
-                DNA(BoundProtein:BoundProtein+(n-1)) = 0;
+                DNA(BoundProtein:BoundProtein+(n-1)) = 0;   %clears protein from current location
                 DNA(BoundProtein+1:BoundProtein+n) = 1; %protein diffuses to the right
+                CurrentBound(k) = CurrentBound(k)+1;    %updates CurrentBound list
+                BoundAtSpot(BoundProtein) = 0;  %updates BoundAtSpot record
+                BoundAtSpot(BoundProtein+1) = 1;
+            end
+        elseif DNA(BoundProtein-1) == 0 & DNA(BoundProtein+n:BoundProtein+n) == 0 & BoundProtein ~= 2 & BoundProtein ~= N+2-n   %if diffusion is possible in both directions...
+            if rand <= Diffusion_Prob  %check diffusion probability
+                if rand <= Left_Prob    %check diffusing to left
+                    DNA(BoundProtein:BoundProtein+(n-1)) = 0;   %clears protein from current location
+                    DNA(BoundProtein-1:BoundProtein+(n-1)-1) = 1;    %protein diffuses to the left
+                    CurrentBound(k) = CurrentBound(k)-1;    %updates CurrentBound list
+                    BoundAtSpot(BoundProtein) = 0;  %updates BoundAtSpot record
+                    BoundAtSpot(BoundProtein-1) = 1;
+                else
+                    DNA(BoundProtein:BoundProtein+(n-1)) = 0;   %clears protein from current location
+                    DNA(BoundProtein+1:BoundProtein+n) = 1; %protein diffuses to the right
+                    CurrentBound(k) = CurrentBound(k)+1;    %updates CurrentBound list
+                    BoundAtSpot(BoundProtein) = 0;  %updates BoundAtSpot record
+                    BoundAtSpot(BoundProtein+1) = 1;
+                end
             end
         end
     end
