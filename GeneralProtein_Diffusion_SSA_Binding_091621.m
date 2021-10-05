@@ -72,7 +72,7 @@ for i = 1:Iterations
     if a_f(i) > rand*a_0(i) %a forward reaction occurs
         eventB = 0;
         while ~eventB   %repeats until a binding occurs
-            SpotB = randsample(Locations,1,true,BindProb(i,1:N-n+1))+1;  %random location on lattice is chosen
+            SpotB = randsample(Locations,1,true,BindProb(i,1:N-n+1));  %random location on lattice is chosen
             if DNA(SpotB:SpotB+(n-1)) == 0   %checks if location is free
                DNA(SpotB:SpotB+(n-1)) = 1;   %binds protein to location
                BoundAtSpot(SpotB) = 1;  %stores locatin in BoundAtSpot
@@ -161,8 +161,9 @@ for i = 1:Iterations
     FracCover(i+1) = sum(DNA)/N;    %fractional coverage of the DNA lattice
 end
 
-figure();
+figure(1);
 scatter(t,FracCover,1,'r','filled');    %fractional coverage vs. dynamic time
+hold on;
 xlabel('Time, t');
 xlim([0 max(t)]);
 ylabel('Saturation Level');
