@@ -14,8 +14,8 @@ k_off = 1;  %kinetic rate constant for unbinding
 w = 1;      %cooperativity parameter
 L_A = 1;  %concentration of free proteins
 
-Diffusion_Prob = 0.5;   %probability of any protein diffusing on lattice
-Left_Prob = 1;    %probability of a protein diffusing right
+Diffusion_Prob = 0.6;   %probability of any protein diffusing on lattice
+Left_Prob = 0.8;    %probability of a protein diffusing right
 
 Iterations = 1000;  %number of events which will occur
 
