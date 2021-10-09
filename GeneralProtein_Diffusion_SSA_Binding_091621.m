@@ -9,13 +9,13 @@ close all;
 
 N = 1000;    %length of DNA lattice
 n = 3;  %length of each protein
-k_on = 1;   %kinetic rate constant for binding
+k_on = 0.8;   %kinetic rate constant for binding
 k_off = 1;  %kinetic rate constant for unbinding
 w = 1;      %cooperativity parameter
 L_A = 1;  %concentration of free proteins
 
-Diffusion_Rate = 0.8;   %rate of diffusion (monomers/time unit)
-Left_Prob = 0.5;    %probability of a protein diffusing right
+Diffusion_Prob = 0.8;   %rate of diffusion (monomers/time unit)
+Left_Prob = 0.8;    %probability of a protein diffusing right
 
 Iterations = 1000;  %number of events which will occur
 
@@ -38,7 +38,7 @@ FracCover = zeros(1,Iterations+1);
 BindProb = zeros(Iterations,N); %probability of protein binding to each location if a binding event were to occur next
                                 %rows are DNA lattices after each iteration
 CoopEvents = zeros(3,Iterations);   %top row is isolated events, second row is singly contiguous, third row is doubly contiguous
-ProteinTracking = zeros(Iterations,N);  %memory allocation to track where proteins are bound over time
+ProteinTracking = zeros(Iterations+1,N);  %memory allocation to track where proteins are bound over time
 
 t(1) = 0;
 BindCounter = 0;
@@ -119,7 +119,7 @@ for i = 1:Iterations
             else
                 R = rand;
             end
-            if R <= Diffusion_Rate & rand <= (Left_Prob)  %check diffusion probability
+            if R <= Diffusion_Prob & rand <= (Left_Prob)  %check diffusion probability
                 DNA(BoundProtein:BoundProtein+(n-1)) = 0;   %clears protein from current location
                 DNA(BoundProtein-1:BoundProtein+(n-1)-1) = 1;   %protein diffuses to the left
                 CurrentBound(k) = CurrentBound(k)-1;    %updates CurrentBound list
@@ -133,7 +133,7 @@ for i = 1:Iterations
             else
                 R = rand;
             end
-            if R <= Diffusion_Rate & rand <= (1-Left_Prob)  %check diffusion probability
+            if R <= Diffusion_Prob & rand <= (1-Left_Prob)  %check diffusion probability
                 DNA(BoundProtein:BoundProtein+(n-1)) = 0;   %clears protein from current location
                 DNA(BoundProtein+1:BoundProtein+n) = 1; %protein diffuses to the right
                 CurrentBound(k) = CurrentBound(k)+1;    %updates CurrentBound list
@@ -142,7 +142,7 @@ for i = 1:Iterations
                 RightDiffCounter = RightDiffCounter+1;
             end
         elseif DNA(BoundProtein-1) == 0 & DNA(BoundProtein+n) == 0 & BoundProtein ~= 2 & BoundProtein ~= N+2-n   %if diffusion is possible in both directions...
-            if rand <= Diffusion_Rate  %check diffusion probability
+            if rand <= Diffusion_Prob  %check diffusion probability
                 if rand <= Left_Prob    %check diffusing to left
                     DNA(BoundProtein:BoundProtein+(n-1)) = 0;   %clears protein from current location
                     DNA(BoundProtein-1:BoundProtein+(n-1)-1) = 1;    %protein diffuses to the left
@@ -167,7 +167,7 @@ for i = 1:Iterations
     ProteinCount(i+1) = sum(DNA)/n;   %all of these values should be integers
     FracCover(i+1) = sum(DNA)/N;    %fractional coverage of the DNA lattice
     
-    ProteinTracking(i,:) = DNA(2:N+1);
+    ProteinTracking(i+1,:) = DNA(2:N+1);
 end
 DiffusionCount = sum([LeftDiffCounter,RightDiffCounter]);   %number of diffusion events which occur
 % disp(['Diffusion Occurence: ', num2str(round(DiffusionCount/Iterations,2)), ' (', num2str(Diffusion_Prob), ')']);   %compares diffusion probability to the actual results
@@ -189,12 +189,18 @@ ylim([0 1]);
 title('ssDNA Saturation');
 box on;
 
+[X_DNA,Y_Time] = meshgrid(1:N,t);
 CustMap = [1 1 1; 0 0 1];  %custom color range for white = uncovered, green = covered nt
 colormap(figure(2),CustMap);
 
 figure(2);
-imagesc(ProteinTracking);
+surf(X_DNA,Y_Time,ProteinTracking,'EdgeColor','none');
+set(gca,'Ydir','reverse');  %reverses time axis so beginning is top of figure
+view(2);
+hold on;
 xlabel('ssDNA Location');
-ylabel('Event (Inverse)');
+xlim([1 N]);
+ylabel('Time, t (Inverse)');
+ylim([0 max(t)]);
 box on;
 title('Protein Diffusion');
