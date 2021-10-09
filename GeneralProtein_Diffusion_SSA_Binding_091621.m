@@ -14,8 +14,8 @@ k_off = 1;  %kinetic rate constant for unbinding
 w = 1;      %cooperativity parameter
 L_A = 1;  %concentration of free proteins
 
-Diffusion_Prob = 0.6;   %probability of any protein diffusing on lattice
-Left_Prob = 0.8;    %probability of a protein diffusing right
+Diffusion_Rate = 0.8;   %rate of diffusion (monomers/time unit)
+Left_Prob = 0.5;    %probability of a protein diffusing right
 
 Iterations = 1000;  %number of events which will occur
 
@@ -113,13 +113,13 @@ for i = 1:Iterations
     CurrentBound = find(BoundAtSpot == 1);
     for k = 1:numel(find(BoundAtSpot == 1)) %check each bound protein for diffusion possibilities
         BoundProtein = CurrentBound(k);
-        if (DNA(BoundProtein-1) == 0 & DNA(BoundProtein+n:BoundProtein+n) ~= 0) | BoundProtein == N+2-n    %if diffusion is only possible to the left...
+        if (DNA(BoundProtein-1) == 0 & DNA(BoundProtein+n) ~= 0) | BoundProtein == N+2-n    %if diffusion is only possible to the left...
             if BoundProtein == 2    %protein bound at position 2 with protein to the right cannot move
                 R = 2;  %makes it so no diffusion can occur
             else
                 R = rand;
             end
-            if R <= Diffusion_Prob & rand <= (Left_Prob)  %check diffusion probability
+            if R <= Diffusion_Rate & rand <= (Left_Prob)  %check diffusion probability
                 DNA(BoundProtein:BoundProtein+(n-1)) = 0;   %clears protein from current location
                 DNA(BoundProtein-1:BoundProtein+(n-1)-1) = 1;   %protein diffuses to the left
                 CurrentBound(k) = CurrentBound(k)-1;    %updates CurrentBound list
@@ -127,13 +127,13 @@ for i = 1:Iterations
                 BoundAtSpot(BoundProtein-1) = 1;
                 LeftDiffCounter = LeftDiffCounter+1;
             end
-        elseif (DNA(BoundProtein-1) ~= 0 & DNA(BoundProtein+n:BoundProtein+n) == 0) | BoundProtein == 2   %if diffusion is only possible to the right...
+        elseif (DNA(BoundProtein-1) ~= 0 & DNA(BoundProtein+n) == 0) | BoundProtein == 2   %if diffusion is only possible to the right...
             if BoundProtein == N+2-n    %protein bound at position N+2-n with protein to the left cannot move
                 R = 2;  %makes it so no diffusion can occur
             else
                 R = rand;
             end
-            if R <= Diffusion_Prob & rand <= (1-Left_Prob)  %check diffusion probability
+            if R <= Diffusion_Rate & rand <= (1-Left_Prob)  %check diffusion probability
                 DNA(BoundProtein:BoundProtein+(n-1)) = 0;   %clears protein from current location
                 DNA(BoundProtein+1:BoundProtein+n) = 1; %protein diffuses to the right
                 CurrentBound(k) = CurrentBound(k)+1;    %updates CurrentBound list
@@ -141,8 +141,8 @@ for i = 1:Iterations
                 BoundAtSpot(BoundProtein+1) = 1;
                 RightDiffCounter = RightDiffCounter+1;
             end
-        elseif DNA(BoundProtein-1) == 0 & DNA(BoundProtein+n:BoundProtein+n) == 0 & BoundProtein ~= 2 & BoundProtein ~= N+2-n   %if diffusion is possible in both directions...
-            if rand <= Diffusion_Prob  %check diffusion probability
+        elseif DNA(BoundProtein-1) == 0 & DNA(BoundProtein+n) == 0 & BoundProtein ~= 2 & BoundProtein ~= N+2-n   %if diffusion is possible in both directions...
+            if rand <= Diffusion_Rate  %check diffusion probability
                 if rand <= Left_Prob    %check diffusing to left
                     DNA(BoundProtein:BoundProtein+(n-1)) = 0;   %clears protein from current location
                     DNA(BoundProtein-1:BoundProtein+(n-1)-1) = 1;    %protein diffuses to the left
@@ -177,8 +177,8 @@ RightDiffusionOcc = RightDiffCounter/DiffusionCount;   %occurence rate of a righ
 Left_P_Error = (abs(LeftDiffusionOcc-Left_Prob)/Left_Prob)*100; %percent errors
 Right_P_Error = (abs(RightDiffusionOcc-(1-Left_Prob))/(1-Left_Prob))*100;
 
-disp(['Left Diffusion: ', num2str(round(LeftDiffusionOcc,2)), ' (', num2str(Left_Prob), ') (', num2str(round(Left_P_Error,1)), '% Error)']); %comparing directional diffusion probability to the actual results
-disp(['Right Diffusion: ', num2str(round(RightDiffusionOcc,2)), ' (', num2str(1-Left_Prob), ') (', num2str(round(Right_P_Error,1)), '% Error)']);
+disp(['Left Diffusion: ', num2str(round(LeftDiffusionOcc,3)), ' (', num2str(Left_Prob), ') (', num2str(round(Left_P_Error,3)), '% Error)']); %comparing directional diffusion probability to the actual results
+disp(['Right Diffusion: ', num2str(round(RightDiffusionOcc,3)), ' (', num2str(1-Left_Prob), ') (', num2str(round(Right_P_Error,3)), '% Error)']);
 
 figure(1);
 scatter(t,FracCover,1,'r','filled');    %fractional coverage vs. dynamic time
