@@ -9,13 +9,13 @@ close all;
 
 N = 1000;    %length of DNA lattice
 n = 3;  %length of each protein
-k_on = 1;   %kinetic rate constant for binding
+k_on = 0.1;   %kinetic rate constant for binding
 k_off = 1;  %kinetic rate constant for unbinding
 w = 1;      %cooperativity parameter
 L_A = 1;  %concentration of free proteins
 
-Diffusion_Prob = 0.5;   %probability of any protein diffusing on lattice
-Left_Prob = 1;    %probability of a protein diffusing right
+Diffusion_Prob = 0.9;   %probability of any protein diffusing on lattice
+Left_Prob = 0.6;    %probability of a protein diffusing right
 
 Iterations = 1000;  %number of events which will occur
 
@@ -38,7 +38,7 @@ FracCover = zeros(1,Iterations+1);
 BindProb = zeros(Iterations,N); %probability of protein binding to each location if a binding event were to occur next
                                 %rows are DNA lattices after each iteration
 CoopEvents = zeros(3,Iterations);   %top row is isolated events, second row is singly contiguous, third row is doubly contiguous
-ProteinTracking = zeros(Iterations,N);  %memory allocation to track where proteins are bound over time
+ProteinTracking = zeros(Iterations+1,N);  %memory allocation to track where proteins are bound over time
 
 t(1) = 0;
 BindCounter = 0;
@@ -167,7 +167,7 @@ for i = 1:Iterations
     ProteinCount(i+1) = sum(DNA)/n;   %all of these values should be integers
     FracCover(i+1) = sum(DNA)/N;    %fractional coverage of the DNA lattice
     
-    ProteinTracking(i,:) = DNA(2:N+1);
+    ProteinTracking(i+1,:) = DNA(2:N+1);
 end
 DiffusionCount = sum([LeftDiffCounter,RightDiffCounter]);   %number of diffusion events which occur
 % disp(['Diffusion Occurence: ', num2str(round(DiffusionCount/Iterations,2)), ' (', num2str(Diffusion_Prob), ')']);   %compares diffusion probability to the actual results
@@ -189,12 +189,17 @@ ylim([0 1]);
 title('ssDNA Saturation');
 box on;
 
+[X_DNA,Y_t] = meshgrid(1:N,t);    %creates matrix values for X and Y values to track protein locations
 CustMap = [1 1 1; 0 0 1];  %custom color range for white = uncovered, green = covered nt
 colormap(figure(2),CustMap);
 
 figure(2);
-imagesc(ProteinTracking);
+surf(X_DNA,Y_t,ProteinTracking,'EdgeColor','none');
+hold on;
+view(2)
 xlabel('ssDNA Location');
-ylabel('Event (Inverse)');
+xlim([1 N]);
+ylabel('Time, t');
+ylim([0 max(t)]);
 box on;
 title('Protein Diffusion');
