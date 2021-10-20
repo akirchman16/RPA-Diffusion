@@ -7,8 +7,6 @@ close all;
 %test for diffusion in one direction or another if possible. The diffusion
 %will essentially be a random walk simulation for the proteins
 
-%Stochastic Binding w/ Deterministic Diffusion
-
 N = 1000;    %length of DNA lattice
 n = 3;  %length of each protein
 k_on = 0.8;   %kinetic rate constant for binding
@@ -16,8 +14,8 @@ k_off = 1;  %kinetic rate constant for unbinding
 w = 1;      %cooperativity parameter
 L_A = 1;  %concentration of free proteins
 
-Diffusion_Rate = 10000;   %rate of diffusion for proteins (diffusion events/time unit)
-Left_Prob = 0.01;    %probability of a protein diffusing right
+Diffusion_Rate = 10;   %rate of diffusion for proteins (diffusion events/time unit)
+Left_Prob = 0.6;    %probability of a protein diffusing right
 
 Iterations = 1000;  %number of events which will occur
 
@@ -41,7 +39,7 @@ BindProb = zeros(Iterations,N); %probability of protein binding to each location
                                 %rows are DNA lattices after each iteration
 CoopEvents = zeros(3,Iterations);   %top row is isolated events, second row is singly contiguous, third row is doubly contiguous
 ProteinTracking = zeros(Iterations+1,N);  %memory allocation to track where proteins are bound over time
-DiffusedProteins = zeros(Iterations,N); %memory allocation to record which proteins diffused at which event number (initial location of protein)
+DiffusedProteins = zeors(Iterations,1); %memory allocation to record which protein
 
 t(1) = 0;
 BindCounter = 0;
@@ -178,9 +176,8 @@ for i = 1:Iterations
     RightDiffCounter = 0;
     MovedProteins = []; %which proteins moved in this time step
     while DiffusionEvents < EventNumCheck & CheckCount ~= numel(CurrentBound)   %completes diffusion events until the proper amount have been done
-%         for k = DiffOrder
+        for k = DiffOrder
             CheckCount = CheckCount+1;
-            k = DiffOrder(CheckCount);  %checks proteins for diffusion in a random order
             ProteinCheck = CurrentBound(k); %location of bound protein that's being checked right now
             if (DNA(ProteinCheck-1) == 0 & DNA(ProteinCheck+n) ~= 0) | ProteinCheck == N+2-n   %if diffusion is only possible to the left...
                 if ProteinCheck == 2    %protein bound at position 2 with protein to the right cannot move
@@ -235,12 +232,12 @@ for i = 1:Iterations
                     MovedProteins = [MovedProteins,ProteinCheck];   %records which proteins moved in this time step
                 end
             end
-%         end
+        end
     end
     TotalDiffEvent = TotalDiffEvent+DiffusionEvents;   %counts total number of diffusion events that occur
     TotalLeftDiff = TotalLeftDiff+LeftDiffCounter;  %counts how many left diffusion events occur throughout simulation
     TotalRightDiff = TotalRightDiff+RightDiffCounter;   %counts how many right diffusion events occur throughout simulation
-    DiffusedProteins(i,1:numel(MovedProteins)) = MovedProteins;  %records which proteins diffused in which time step event
+    DiffusedProteins(i,:) = MovedProteins;  %records which proteins diffused in which time step event
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     t(i+1) = t(i)+dt(i);    %advances time
 
@@ -259,7 +256,6 @@ disp(['Right Diffusion: ', num2str(round(RightDiffusionOcc,3)), ' (', num2str(1-
 
 figure(1);
 scatter(t,FracCover,1,'r','filled');    %fractional coverage vs. dynamic time
-hold on;
 xlabel('Time, t');
 xlim([0 max(t)]);
 ylabel('Saturation Level');
