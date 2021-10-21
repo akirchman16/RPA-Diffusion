@@ -202,8 +202,8 @@ RightDiffusionOcc = TotalRightDiff/TotalDiffEvent;   %occurence rate of a right 
 Left_P_Error = (abs(LeftDiffusionOcc-Left_Prob)/Left_Prob)*100; %percent errors
 Right_P_Error = (abs(RightDiffusionOcc-(1-Left_Prob))/(1-Left_Prob))*100;
 
-disp(['Left Diffusion: ', num2str(round(LeftDiffusionOcc,2)), ' (', num2str(Left_Prob), ') (', num2str(round(Left_P_Error,3)), '% Error)']); %comparing directional diffusion probability to the actual results
-disp(['Right Diffusion: ', num2str(round(RightDiffusionOcc,2)), ' (', num2str(1-Left_Prob), ') (', num2str(round(Right_P_Error,3)), '% Error)']);
+disp(['Left Diffusion: ', num2str(round(LeftDiffusionOcc,3)), ' (', num2str(Left_Prob), ') (', num2str(round(Left_P_Error,3)), '% Error)']); %comparing directional diffusion probability to the actual results
+disp(['Right Diffusion: ', num2str(round(RightDiffusionOcc,3)), ' (', num2str(1-Left_Prob), ') (', num2str(round(Right_P_Error,3)), '% Error)']);
 
 figure(1);
 scatter(t,FracCover,1,'r','filled');    %fractional coverage vs. dynamic time
@@ -232,5 +232,4 @@ box on;
 title('Protein Diffusion');
 
 TheoreticalDiffEvents = t(end)*Diffusion_Rate;  %theoretical number of diffusions that should have occured
-DiffusionEventsError = (abs(TheoreticalDiffEvents-TotalDiffEvent)/TheoreticalDiffEvents)*100;   %percent error of diffusion events
-disp(['Diffusion Events: ', num2str(round(DiffusionEventsError,2)), '% Error']);
+Diffusi
