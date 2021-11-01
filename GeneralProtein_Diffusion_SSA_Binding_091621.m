@@ -49,6 +49,7 @@ UnbindCounter = 0;
 TotalDiffEvent = 0;
 TotalLeftDiff = 0;
 TotalRightDiff = 0;
+MaxOut = 0;
 
 xB(1) = N-(n-1);    %initial values for a free lattice
 xAB(1) = 0;
@@ -126,64 +127,65 @@ for i = 1:Iterations
     RightDiffCounter = 0;
     MovedProteins = []; %which proteins moved in this time step
     while DiffusionEvents < EventNumCheck & CheckCount ~= numel(CurrentBound)   %completes diffusion events until the proper amount have been done
-%         for k = DiffOrder
-            CheckCount = CheckCount+1;
-            k = DiffOrder(CheckCount);  %checks proteins for diffusion in a random order
-            ProteinCheck = CurrentBound(k); %location of bound protein that's being checked right now
-            if (DNA(ProteinCheck-1) == 0 & DNA(ProteinCheck+n) ~= 0) | ProteinCheck == N+2-n   %if diffusion is only possible to the left...
-                if ProteinCheck == 2    %protein bound at position 2 with protein to the right cannot move
-                    R = 2;  %no diffusion can occur
-                else
-                    R = rand;
-                end
-                if R <= (Left_Prob)  %check left diffusion probability
-                    DNA(ProteinCheck:ProteinCheck+(n-1)) = 0;   %clears protein from current location
-                    DNA(ProteinCheck-1:ProteinCheck+n-2) = 1; %protein diffuses to the left
-                    CurrentBound(k) = CurrentBound(k)-1;    %updates CurrentBound list
-                    BoundAtSpot(ProteinCheck) = 0;  %updates BoundAtSpot record
-                    BoundAtSpot(ProteinCheck-1) = 1;
-                    LeftDiffCounter = LeftDiffCounter+1;
-                    DiffusionEvents = DiffusionEvents+1;
-                    MovedProteins = [MovedProteins,ProteinCheck];   %records which proteins moved in this time step
-                end
-            elseif  (DNA(ProteinCheck-1) ~= 0 & DNA(ProteinCheck+n) == 0) | ProteinCheck == 2   %if diffusion is only possible to the right...
-                if ProteinCheck == N+2-n    %protein bound at position N+2-n with protein to the left cannot diffuse
-                    R = 2;  %makes it so no diffusion can occur
-                else
-                    R = rand;
-                end
-                if R <= (1-Left_Prob)
-                    DNA(ProteinCheck:ProteinCheck+(n-1)) = 0;   %clears protein from current location
-                    DNA(ProteinCheck+1:ProteinCheck+n) = 1; %protein diffuses to the right
-                    CurrentBound(k) = CurrentBound(k)+1;    %updates CurrentBound list
-                    BoundAtSpot(ProteinCheck) = 0;  %updates BoundAtSpot record
-                    BoundAtSpot(ProteinCheck+1) = 1;
-                    RightDiffCounter = RightDiffCounter+1;
-                    DiffusionEvents = DiffusionEvents+1;
-                    MovedProteins = [MovedProteins,ProteinCheck];   %records which proteins moved in this time step
-                end
-            elseif DNA(ProteinCheck-1) == 0 & DNA(ProteinCheck+n) == 0 & ProteinCheck ~= 2 & ProteinCheck ~= N+2-n %if diffusion is possible in either direction...
-                if rand <= Left_Prob    %check diffusing to left
-                    DNA(ProteinCheck:ProteinCheck+(n-1)) = 0;   %clears protein from current location
-                    DNA(ProteinCheck-1:ProteinCheck+(n-1)-1) = 1;    %protein diffuses to the left
-                    CurrentBound(k) = CurrentBound(k)-1;    %updates CurrentBound list
-                    BoundAtSpot(ProteinCheck) = 0;  %updates BoundAtSpot record
-                    BoundAtSpot(ProteinCheck-1) = 1;
-                    LeftDiffCounter = LeftDiffCounter+1;
-                    DiffusionEvents = DiffusionEvents+1;
-                    MovedProteins = [MovedProteins,ProteinCheck];   %records which proteins moved in this time step
-                else
-                    DNA(ProteinCheck:ProteinCheck+(n-1)) = 0;   %clears protein from current location
-                    DNA(ProteinCheck+1:ProteinCheck+n) = 1; %protein diffuses to the right
-                    CurrentBound(k) = CurrentBound(k)+1;    %updates CurrentBound list
-                    BoundAtSpot(ProteinCheck) = 0;  %updates BoundAtSpot record
-                    BoundAtSpot(ProteinCheck+1) = 1;
-                    RightDiffCounter = RightDiffCounter+1;
-                    DiffusionEvents = DiffusionEvents+1;
-                    MovedProteins = [MovedProteins,ProteinCheck];   %records which proteins moved in this time step
-                end
+        CheckCount = CheckCount+1;
+        k = DiffOrder(CheckCount);  %checks proteins for diffusion in a random order
+        ProteinCheck = CurrentBound(k); %location of bound protein that's being checked right now
+        if (DNA(ProteinCheck-1) == 0 & DNA(ProteinCheck+n) ~= 0) | ProteinCheck == N+2-n   %if diffusion is only possible to the left...
+            if ProteinCheck == 2    %protein bound at position 2 with protein to the right cannot move
+                R = 2;  %no diffusion can occur
+            else
+                R = rand;
             end
-%         end
+            if R <= (Left_Prob)  %check left diffusion probability
+                DNA(ProteinCheck:ProteinCheck+(n-1)) = 0;   %clears protein from current location
+                DNA(ProteinCheck-1:ProteinCheck+n-2) = 1; %protein diffuses to the left
+                CurrentBound(k) = CurrentBound(k)-1;    %updates CurrentBound list
+                BoundAtSpot(ProteinCheck) = 0;  %updates BoundAtSpot record
+                BoundAtSpot(ProteinCheck-1) = 1;
+                LeftDiffCounter = LeftDiffCounter+1;
+                DiffusionEvents = DiffusionEvents+1;
+                MovedProteins = [MovedProteins,ProteinCheck];   %records which proteins moved in this time step
+            end
+        elseif  (DNA(ProteinCheck-1) ~= 0 & DNA(ProteinCheck+n) == 0) | ProteinCheck == 2   %if diffusion is only possible to the right...
+            if ProteinCheck == N+2-n    %protein bound at position N+2-n with protein to the left cannot diffuse
+                R = 2;  %makes it so no diffusion can occur
+            else
+                R = rand;
+            end
+            if R <= (1-Left_Prob)
+                DNA(ProteinCheck:ProteinCheck+(n-1)) = 0;   %clears protein from current location
+                DNA(ProteinCheck+1:ProteinCheck+n) = 1; %protein diffuses to the right
+                CurrentBound(k) = CurrentBound(k)+1;    %updates CurrentBound list
+                BoundAtSpot(ProteinCheck) = 0;  %updates BoundAtSpot record
+                BoundAtSpot(ProteinCheck+1) = 1;
+                RightDiffCounter = RightDiffCounter+1;
+                DiffusionEvents = DiffusionEvents+1;
+                MovedProteins = [MovedProteins,ProteinCheck];   %records which proteins moved in this time step
+            end
+        elseif DNA(ProteinCheck-1) == 0 & DNA(ProteinCheck+n) == 0 & ProteinCheck ~= 2 & ProteinCheck ~= N+2-n %if diffusion is possible in either direction...
+            if rand <= Left_Prob    %check diffusing to left
+                DNA(ProteinCheck:ProteinCheck+(n-1)) = 0;   %clears protein from current location
+                DNA(ProteinCheck-1:ProteinCheck+(n-1)-1) = 1;    %protein diffuses to the left
+                CurrentBound(k) = CurrentBound(k)-1;    %updates CurrentBound list
+                BoundAtSpot(ProteinCheck) = 0;  %updates BoundAtSpot record
+                BoundAtSpot(ProteinCheck-1) = 1;
+                LeftDiffCounter = LeftDiffCounter+1;
+                DiffusionEvents = DiffusionEvents+1;
+                MovedProteins = [MovedProteins,ProteinCheck];   %records which proteins moved in this time step
+            else
+                DNA(ProteinCheck:ProteinCheck+(n-1)) = 0;   %clears protein from current location
+                DNA(ProteinCheck+1:ProteinCheck+n) = 1; %protein diffuses to the right
+                CurrentBound(k) = CurrentBound(k)+1;    %updates CurrentBound list
+                BoundAtSpot(ProteinCheck) = 0;  %updates BoundAtSpot record
+                BoundAtSpot(ProteinCheck+1) = 1;
+                RightDiffCounter = RightDiffCounter+1;
+                DiffusionEvents = DiffusionEvents+1;
+                MovedProteins = [MovedProteins,ProteinCheck];   %records which proteins moved in this time step
+            end
+        end
+        if (DiffusionEvents == numel(CurrentBound)) & (DiffusionEvents  < EventNumCheck)
+            MaxOut = MaxOut+1;  %counts how many times the diffusions maxed out before reaching the theoretical number of diffusions
+        end
     end
     TotalDiffEvent = TotalDiffEvent+DiffusionEvents;   %counts total number of diffusion events that occur
     TotalLeftDiff = TotalLeftDiff+LeftDiffCounter;  %counts how many left diffusion events occur throughout simulation
@@ -235,3 +237,5 @@ title('Protein Diffusion');
 TheoreticalDiffEvents = t(end)*Diffusion_Rate;  %theoretical number of diffusions that should have occured
 DiffusionEventsError = (abs(TheoreticalDiffEvents-TotalDiffEvent)/TheoreticalDiffEvents)*100;   %percent error of diffusion events
 disp(['Diffusion Events: ', num2str(round(DiffusionEventsError,2)), '% Error']);
+
+disp([num2str(MaxOut), ' MaxOut Events (', num2str(MaxOut/Iterations), '%)']);   %number of MaxOut diffusion events (Percentage of all events)
