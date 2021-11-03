@@ -9,27 +9,18 @@ close all;
 
 %Stochastic Binding w/ Deterministic Diffusion
 
-N = 1000;    %length of DNA lattice
+N = 5000;    %length of DNA lattice
 n = 3;  %length of each protein
-<<<<<<< Updated upstream
-k_on = 0.8;   %kinetic rate constant for binding
-k_off = 5;  %kinetic rate constant for unbinding
-w = 1;      %cooperativity parameter
-L_A = 1;  %concentration of free proteins
 
-Diffusion_Rate = 100000;   %rate of diffusion for proteins (diffusion events/time unit)
-Left_Prob = 0.8;    %probability of a protein diffusing right
-=======
-k_on = 0.1;   %kinetic rate constant for binding
+k_on = 1;   %kinetic rate constant for binding
 k_off = 1;  %kinetic rate constant for unbinding
 w = 1;      %cooperativity parameter
 L_A = 1;  %concentration of free proteins
 
-Diffusion_Rate = 10000;   %rate of diffusion for proteins (diffusion events/time unit)
-Left_Prob = 1;    %probability of a protein diffusing right
->>>>>>> Stashed changes
+Diffusion_Rate = 100000;   %rate of diffusion for proteins (diffusion events/time unit)
+Left_Prob = 0.5;    %probability of a protein diffusing right
 
-Iterations = 1000;  %number of events which will occur
+Iterations = 10000;  %number of events which will occur
 
 K = k_on/k_off; %equilibrium constant
 Locations = 2:1:N-(n-1)+1;  %list of all possible locations on the lattice
