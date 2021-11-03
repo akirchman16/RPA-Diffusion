@@ -11,6 +11,7 @@ close all;
 
 N = 1000;    %length of DNA lattice
 n = 3;  %length of each protein
+<<<<<<< Updated upstream
 k_on = 0.8;   %kinetic rate constant for binding
 k_off = 5;  %kinetic rate constant for unbinding
 w = 1;      %cooperativity parameter
@@ -18,6 +19,15 @@ L_A = 1;  %concentration of free proteins
 
 Diffusion_Rate = 100000;   %rate of diffusion for proteins (diffusion events/time unit)
 Left_Prob = 0.8;    %probability of a protein diffusing right
+=======
+k_on = 0.1;   %kinetic rate constant for binding
+k_off = 1;  %kinetic rate constant for unbinding
+w = 1;      %cooperativity parameter
+L_A = 1;  %concentration of free proteins
+
+Diffusion_Rate = 10000;   %rate of diffusion for proteins (diffusion events/time unit)
+Left_Prob = 1;    %probability of a protein diffusing right
+>>>>>>> Stashed changes
 
 Iterations = 1000;  %number of events which will occur
 
