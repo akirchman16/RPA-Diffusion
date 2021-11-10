@@ -60,49 +60,53 @@ FracCover(1) = (xAB(1)*n)/N; %initial fractional coverage; 0 for an initially em
 
 LeftDiffCounter = 0;
 RightDiffCounter = 0;
+Event = 0;  %counts number of events which have occured
+Equilibrium = 0;    %Is the system in equilibrium? 0 = False, 1 = True
 
-for i = 1:Iterations
-    a_f(i) = k_on*(L_A)*(xB(i));   %propensity functions (probability of each event happening)
-    a_r(i) = k_off*(xAB(i));
-    a_0(i) = a_f(i)+a_r(i);     %sum of propensity functions used for determining dt
+tic
+while Equilibrium == 0
+    Event = Event+1;
+    a_f(Event) = k_on*(L_A)*(xB(Event));   %propensity functions (probability of each event happening)
+    a_r(Event) = k_off*(xAB(Event));
+    a_0(Event) = a_f(Event)+a_r(Event);     %sum of propensity functions used for determining dt
 
-    dt(i) = (1/a_0(i))*log(1/rand); %random time interval for Gillespie method
+    dt(Event) = (1/a_0(Event))*log(1/rand); %random time interval for Gillespie method
     
     for j = 2:N-(n-1)+1   %loop to calculate probability of binding at each spot if binding event occurs
         if (DNA(j) ~= 1) && (sum(DNA(j:j+(n-1))) == 0)
             if DNA(j-1) == 0 && DNA(j+n) == 0   %checks for isolated location
-                BindProb(i,j-1) = 1/(xB(i));
+                BindProb(Event,j-1) = 1/(xB(Event));
             elseif (DNA(j-1) == 0 && DNA(j+n) == 1) || (DNA(j-1) == 1 && DNA(j+n) == 0) %checks for singly contiguous location
-                BindProb(i,j-1) = w/(xB(i));
+                BindProb(Event,j-1) = w/(xB(Event));
             elseif DNA(j-1) == 1 && DNA(j+n) == 1 %checks for doubly contiguous location
-                BindProb(i,j-1) = (w^2)/(xB(i));
+                BindProb(Event,j-1) = (w^2)/(xB(Event));
             end
         end
     end
 
-    if a_f(i) > rand*a_0(i) %a forward reaction occurs
+    if a_f(Event) > rand*a_0(Event) %a forward reaction occurs
         eventB = 0;
         while ~eventB   %repeats until a binding occurs
-            SpotB = randsample(Locations,1,true,BindProb(i,1:N-n+1));  %random location on lattice is chosen
+            SpotB = randsample(Locations,1,true,BindProb(Event,1:N-n+1));  %random location on lattice is chosen
             if DNA(SpotB:SpotB+(n-1)) == 0   %checks if location is free
                DNA(SpotB:SpotB+(n-1)) = 1;   %binds protein to location
                BoundAtSpot(SpotB) = 1;  %stores locatin in BoundAtSpot
                BindCounter = BindCounter+1;    %updates bind counter
-               Hist(1,i) = SpotB;      %stores location of binding event
+               Hist(1,Event) = SpotB;      %stores location of binding event
 
                FreeSpots = sum(max(find(diff([1 DNA 1])==1)-find(diff([1 DNA 1])==-1)-n+1,0)); %function to find number of free spots now available
-               xB(i+1) = FreeSpots;    %updates populations
-               xAB(i+1) = xAB(i)+1;
+               xB(Event+1) = FreeSpots;    %updates populations
+               xAB(Event+1) = xAB(Event)+1;
 
                eventB = 1;
             end
         end
         if DNA(SpotB-1) == 0 && DNA(SpotB+n) == 0 %isolated event occured
-            CoopEvents(1,i) = SpotB;
+            CoopEvents(1,Event) = SpotB;
         elseif (DNA(SpotB-1) == 0 && DNA(SpotB+n) == 1) || (DNA(SpotB-1) == 1 && DNA(SpotB+n) == 0) %singly contiguous event occured
-            CoopEvents(2,i) = SpotB;
+            CoopEvents(2,Event) = SpotB;
         elseif DNA(j-1) == 1 && DNA(j+n) == 1   %doubly contiguous binding event occured
-            CoopEvents(3,i) = SpotB;
+            CoopEvents(3,Event) = SpotB;
         end
     else                       %otherwise an unbinding has to occur
         CurrentBound = find(BoundAtSpot == 1);
@@ -112,18 +116,18 @@ for i = 1:Iterations
         DNA(SpotU:SpotU+(n-1)) = 0; %unbinds protein
         BoundAtSpot(SpotU) = 0; %removes location from BoundAtSpot
         UnbindCounter = UnbindCounter+1;    %updates unbind counter
-        Hist(2,i) = SpotU;  %stores location of unbinding event
+        Hist(2,Event) = SpotU;  %stores location of unbinding event
 
         FreeSpots = sum(max(find(diff([1 DNA 1])==1)-find(diff([1 DNA 1])==-1)-n+1,0)); %calculates number of free spaces
-        xB(i+1) = FreeSpots;
-        xAB(i+1) = xAB(i)-1;
+        xB(Event+1) = FreeSpots;
+        xAB(Event+1) = xAB(Event)-1;
     end
 %%% Diffusion Process - Deterministic Method %%%%%%%%%%%%%%%%%%%%%%%%%%%%
     CurrentBound = find(BoundAtSpot == 1);  %list of all locations where a protein is bound
     DiffOrder = randperm(numel(CurrentBound)); %random order to test for diffusion
     DiffusionEvents = 0;    %initially no diffusion events have occured in this time step
     CheckCount = 0; %number of checks that have occured
-    EventNumCheck = round(Diffusion_Rate*dt(i));    %number of diffusion events to occur in this time step
+    EventNumCheck = round(Diffusion_Rate*dt(Event));    %number of diffusion events to occur in this time step
     LeftDiffCounter = 0;
     RightDiffCounter = 0;
     MovedProteins = []; %which proteins moved in this time step
@@ -191,15 +195,29 @@ for i = 1:Iterations
     TotalDiffEvent = TotalDiffEvent+DiffusionEvents;   %counts total number of diffusion events that occur
     TotalLeftDiff = TotalLeftDiff+LeftDiffCounter;  %counts how many left diffusion events occur throughout simulation
     TotalRightDiff = TotalRightDiff+RightDiffCounter;   %counts how many right diffusion events occur throughout simulation
-    DiffusedProteins(i,1:numel(MovedProteins)) = MovedProteins;  %records which proteins diffused in which time step event
+    DiffusedProteins(Event,1:numel(MovedProteins)) = MovedProteins;  %records which proteins diffused in which time step event
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    t(i+1) = t(i)+dt(i);    %advances time
+    t(Event+1) = t(Event)+dt(Event);    %advances time
 
-    ProteinCount(i+1) = sum(DNA)/n;   %all of these values should be integers
-    FracCover(i+1) = sum(DNA)/N;    %fractional coverage of the DNA lattice
+    ProteinCount(Event+1) = sum(DNA)/n;   %all of these values should be integers
+    FracCover(Event+1) = sum(DNA)/N;    %fractional coverage of the DNA lattice
     
-    ProteinTracking(i+1,:) = DNA(2:N+1);
+    ProteinTracking(Event+1,:) = DNA(2:N+1);
+    
+    if Event >= 100 %only tests for equilibrium after 100 events
+        t_Equilibrium_Test = t(Event+1-round(0.25*(Event+1)):end);  %set of time we're looking for and testing for equilibrium
+        Sat_Equilibrium_Test = FracCover(Event+1-round(0.25*(Event+1)):end);    %set of FracCover values to test for equilibrium in
+        Avg_Saturation = sum(Sat_Equilibrium_Test)/numel(Sat_Equilibrium_Test); %average saturation level
+        CurveFit = polyfit(t_Equilibrium_Test,Sat_Equilibrium_Test,1);  %linear fit to the last quarter of events
+        Y_Int_Error(Event) = abs(Avg_Saturation-CurveFit(2))/Avg_Saturation;   %percent error in y-intercept fit
+        if abs(CurveFit(1)) < 0.01 & (Y_Int_Error < 0.05 | isnan(Y_Int_Error))  %if fitted slope is basically zero and the fitted y-int is basically the average saturation...
+            Equilibrium = 1;    %...then the system is considered to be at equilibirum
+        else
+            Equilibrium = 0;
+        end
+    end
 end
+toc
 LeftDiffusionOcc = TotalLeftDiff/TotalDiffEvent; %occurence rate of a left diffusion
 RightDiffusionOcc = TotalRightDiff/TotalDiffEvent;   %occurence rate of a right diffusion
 Left_P_Error = (abs(LeftDiffusionOcc-Left_Prob)/Left_Prob)*100; %percent errors
@@ -221,7 +239,6 @@ box on;
 [X_DNA,Y_Time] = meshgrid(1:N,t);
 CustMap = [1 1 1; 0 0 1];  %custom color range for white = uncovered, green = covered nt
 colormap(figure(2),CustMap);
-colormap(figure(3),CustMap);
 
 figure(2);
 surf(X_DNA,Y_Time,ProteinTracking,'EdgeColor','none');
@@ -239,4 +256,9 @@ TheoreticalDiffEvents = t(end)*Diffusion_Rate;  %theoretical number of diffusion
 DiffusionEventsError = (abs(TheoreticalDiffEvents-TotalDiffEvent)/TheoreticalDiffEvents)*100;   %percent error of diffusion events
 disp(['Diffusion Events: ', num2str(round(DiffusionEventsError,2)), '% Error']);
 
-disp([num2str(MaxOut), ' MaxOut Events (', num2str(MaxOut/Iterations), '%)']);   %number of MaxOut diffusion events (Percentage of all events)
+figure(3);
+scatter(1:Event,Y_Int_Error,5,'k','filled');
+hold on;
+xlabel('Event Number'); xlim([0 Event]);
+ylabel('Y Intercept Error'); ylim([0 1]);
+box on;
