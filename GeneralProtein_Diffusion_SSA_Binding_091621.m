@@ -17,7 +17,7 @@ k_off = 1;  %kinetic rate constant for unbinding
 w = 1;      %cooperativity parameter
 L_A = 1;  %concentration of free proteins
 
-Diffusion_Rate = 0;   %rate of diffusion for proteins (diffusion events/time unit)
+Diffusion_Rate = 10000;   %rate of diffusion for proteins (diffusion events/time unit)
 Left_Prob = 0.5;    %probability of a protein diffusing right
 
 minIterations = 100;  %minimum number of events which will occur
