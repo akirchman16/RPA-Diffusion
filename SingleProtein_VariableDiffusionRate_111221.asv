@@ -31,7 +31,7 @@ q_Count = parallel.pool.DataQueue;  %data queue to count how many simulations ha
 afterEach(q_Count,@parforWaitbar);  %runs parforWatibar function at conclusion of each iteration (advances the progress bar)
 parforWaitbar(wait, numel(DiffusionRate_Values)/2); %defines inputs for parforWaitbar function
 
-parfor Trial = 1:numel(DiffusionRate_Values)
+for Trial = 1:numel(DiffusionRate_Values)
     Diffusion_Rate = DiffusionRate_Values(Trial);
     
     K = k_on/k_off; %equilibrium constant
