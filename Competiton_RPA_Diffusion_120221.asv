@@ -10,12 +10,12 @@ close all;
 N = 5000;   %ssDNA length
 DNA = zeros(2,N);   %represents ssDNA lattice (2nd row is real lattice)
 
-minIterations = 10000;
+minIterations = 5000;
 
 %RAD51 Properties/Parameters
 RAD51 = 51; %how RAD51 will be represented on the lattice
 n_RAD51 = 3;    %size of RAD51 protein
-TotalCount_RAD51 = 1000; %number of total RAD51 proteins (monomers)
+TotalCount_RAD51 = 5000; %number of total RAD51 proteins (monomers)
 w_RAD51 = 1;    %cooperativity constant for RAD51
 k_on_RAD51 = 1; %kinetic rate constant for RAD51 binding
 k_off_RAD51 = 1;    %kinetic rate constant for RAD51 unbinding
@@ -26,14 +26,12 @@ RPA_D = 3;  %represent RPA-D on lattice
 n_A = 10;   %size of RPA-A
 n_D = 10;   %size of RPA-D
 n_RPA = n_A+n_D;
-TotalCount_RPA = 125;    %total number of RPA proteins that exist
+TotalCount_RPA = 5000;    %total number of RPA proteins that exist
 w_RPA = 1;  %cooperativity of RPA (IDK if this is fully included in the model currently)
-k_on_RPA_A = 100;    %kinetic rate constant for RPA-A binding
+k_on_RPA_A = 50;    %kinetic rate constant for RPA-A binding
 k_off_RPA_A = 1;    %kinetic rate constant for RPA-A unbinding
-k_on_RPA_D = 50;    %kinetic rate consant for RPA-D binding
+k_on_RPA_D = 20;    %kinetic rate consant for RPA-D binding
 k_off_RPA_D = 1;    %kinetic rate constant for RPA-D unbinding
-
-DiffusionRate = 100;    %RPA Diffusion Rate constant (events/time interval)
 
 %Memory Allocation
 t = zeros(1,minIterations);
@@ -362,19 +360,16 @@ for i = 1:minIterations
     FracCover_Total(Event+1) = FracCover_RPA(Event+1)+FracCover_RAD51(Event+1); %Total Saturation of ssDNA
 end
 
-Max_RAD51_Sat = (Free_Proteins(1,1)*n_RAD51)/N; %maximum saturation for RAD51
-Max_RPA_A_Sat = (Free_Proteins(3,1)*n_A)/N; %maximum saturation for RPA-A
-Max_RPA_D_Sat = (Free_Proteins(3,1)*n_D)/N; %maximum saturation for RPA-D
-Max_RPA_Sat = (Free_Proteins(3,1)*n_RPA)/N; %maximum saturation for RPA
-Max_Sat = ((Free_Proteins(1,1)*n_RAD51)+(Free_Proteins(3,1)*n_RPA))/N;   %maximum total saturation
+Max_RAD51_Sat = (Free_Proteins(1,1)*n_RAD51)/N; %maximum saturation for R
+Max_RPA_Sat
+Max_Sat
 
 figure(1);  %Saturation Plot
 P_RAD51 = scatter(t,FracCover_RAD51,1,'red','filled');    hold on;
-yline(Max_RAD51_Sat,'--red');
-P_RPA_A = scatter(t,FracCover_RPA_A,1,'cyan','filled'); yline(Max_RPA_A_Sat,'--cyan');
-P_RPA_D = scatter(t,FracCover_RPA_D,1,'blue','filled'); yline(Max_RPA_D_Sat,'--blue');
-P_RPA = scatter(t,FracCover_RPA,1,'magenta','filled');  yline(Max_RPA_Sat,'--magenta');
-P_Total = scatter(t,FracCover_Total,1,'k','filled');    yline(Max_Sat,'--k');
+P_RPA_A = scatter(t,FracCover_RPA_A,1,'cyan','filled');
+P_RPA_D = scatter(t,FracCover_RPA_D,1,'blue','filled');
+P_RPA = scatter(t,FracCover_RPA,1,'magenta','filled');
+P_Total = scatter(t,FracCover_Total,1,'k','filled');
 xlabel('Time, t'); xlim([0 max(t)]);
 ylabel('Saturation'); ylim([0 1]);
 title('RAD51/RPA Competition Saturation');
