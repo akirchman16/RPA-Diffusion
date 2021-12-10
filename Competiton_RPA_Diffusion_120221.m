@@ -354,6 +354,30 @@ for i = 1:minIterations
         end
     end
     
+    RPA_CurrentBound = sort([find(RPA_A_BoundAtSpot == 1),find(RPA_D_BoundAtSpot == 1)]);  %list of locations where RPA is bound
+    DiffusionOrder = randperm(RPA_CurrentBound);    %random order to check RPA proteins if they can diffuse
+    DiffusionEvents = 0;    %resets Diffusion event counter
+    CheckCount = 0; %number of diffusion events which have actually occured
+    DiffusionCountCheck = round(DiffusionRate*dt(Event));
+    LeftDiffCounter = 0;    %counts number of left diffusion events
+    RightDiffCounter = 0;   %number of right diffusion events
+    while DiffusionEvents <= DiffusionCountCheck & CheckCount ~= numel(RPA_CurrentBound)    %checks for diffusion at each protein until all have ben checked or the right amount of events have occured
+        CheckCount = CheckCount+1;
+        k = DiffusionOrder(CheckCount);
+        RPA_Check = RPA_CurrentBound(k);    %random protein to be checked
+        if (DNA(RPA_Check) == RPA_A)    %if the selected protein is RPA-A...
+            if (DNA(RPA_Check-1) == 0) && (DNA(RPA_Check+n_RPA) ~= 0); %if protein can only diffuse to the left
+            elseif (DNA(RPA_Check-1) ~= 0) && (DNA(RPA_Check+n_RPA) == 0);  %if protein can only diffuse to the right
+            else    %otherwise it can diffuse in either direction
+            end
+        else    %otherwise the selected protein is RPA-D    %...otherwise the selected protein is RPA-D
+            if (DNA(RPA_Check-n_A) == 0) && (DNA(RPA_Check+n_D) ~= 0);  %if protein can only diffuse to the left
+            elseif (DNA(RPA_Check-n_A) ~= 0) && (DNA(RPA_Check+n_D) == 0); %if protein can only diffuse to the right
+            else    %otherwise it can diffuse in either direction
+            end
+        end
+    end
+    
     t(Event+1) = t(Event)+dt(Event);    %advances time
     FracCover_RAD51(Event+1) = numel(find(DNA(2,:) == RAD51))/N;    %RAD51 Saturation
     FracCover_RPA_A(Event+1) = numel(find(DNA(2,:) == RPA_A))/N;    %RPA-A Saturation
