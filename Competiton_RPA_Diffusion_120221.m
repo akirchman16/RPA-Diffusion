@@ -208,7 +208,7 @@ for i = 1:minIterations
                 % 2 - RAD51 Dimer
                 % 3 - RPA-A
                 % 4 - RPA-D
-%%% I believe this should work? - It looks like it does %%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     a_RAD51_Mon = [k_on_RAD51*Available_Counts(1)*Free_Proteins(1,Event);k_on_RAD51*Available_Counts(2)*Free_Proteins(1,Event)*w_RAD51;k_on_RAD51*Available_Counts(3)*Free_Proteins(1,Event)*(w_RAD51^2)];  %propensity functions for RAD51 monomer binding
     a_RAD51_Dim = [k_on_RAD51*Available_Counts(4)*Free_Proteins(2,Event);k_on_RAD51*Available_Counts(5)*Free_Proteins(2,Event)*w_RAD51;k_on_RAD51*Available_Counts(6)*Free_Proteins(2,Event)*(w_RAD51^2)];  %propensity functions for RAD51 Dimer binding
     a_RPA_Macro = [k_on_RPA_A*Available_Counts(7)*Free_Proteins(3,Event);k_on_RPA_A*Available_Counts(8)*Free_Proteins(3,Event)*w_RPA;k_on_RPA_A*Available_Counts(9)*Free_Proteins(3,Event)*(w_RPA^2)];  %propensity functions for RPA Macro binding
