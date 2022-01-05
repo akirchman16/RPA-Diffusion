@@ -249,18 +249,18 @@ legend([Error,Profile],'Y-Intercept Error','Saturation','Location','North');
 title('Equilibrium Test & Saturation');
 box on;
 
-% [X_DNA,Y_Time] = meshgrid(1:N,t);
-% CustMap = [1 1 1; 0 0 1];  %custom color range for white = uncovered, green = covered nt
-% colormap(figure(2),CustMap);
+[X_DNA,Y_Time] = meshgrid(1:N,t);
+CustMap = [1 1 1; 0 0 1];  %custom color range for white = uncovered, green = covered nt
+colormap(figure(2),CustMap);
 
-% figure(2);
-% surf(X_DNA,Y_Time,ProteinTracking,'EdgeColor','none');
-% set(gca,'Ydir','reverse');  %reverses time axis so beginning is top of figure
-% view(2);
-% hold on;
-% xlabel('ssDNA Location');
-% xlim([1 N]);
-% ylabel('Time, t (Inverse)');
-% ylim([0 max(t)]);
-% box on;
-% title('Protein Diffusion');
+figure(2);
+surf(X_DNA,Y_Time,ProteinTracking,'EdgeColor','none');
+set(gca,'Ydir','reverse');  %reverses time axis so beginning is top of figure
+view(2);
+hold on;
+xlabel('ssDNA Location');
+xlim([1 N]);
+ylabel('Time, t (Inverse)');
+ylim([0 max(t)]);
+box on;
+title('Protein Diffusion');
