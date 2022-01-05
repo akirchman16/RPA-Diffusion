@@ -7,7 +7,7 @@ close all;
 % will have the possibility to diffuse along the lattice if they're able
 % to. This will be set by the RPA_DiffusionProb.
 
-N = 5000;   %ssDNA length
+N = 1000;   %ssDNA length
 DNA = zeros(2,N);   %represents ssDNA lattice (2nd row is real lattice)
 
 minIterations = 10000;
@@ -15,7 +15,7 @@ minIterations = 10000;
 %RAD51 Properties/Parameters
 RAD51 = 51; %how RAD51 will be represented on the lattice
 n_RAD51 = 3;    %size of RAD51 protein
-TotalCount_RAD51 = 1000; %number of total RAD51 proteins (monomers)
+TotalCount_RAD51 = (floor(N/n_RAD51)/2)-25; %number of total RAD51 proteins (monomers)
 w_RAD51 = 1;    %cooperativity constant for RAD51
 k_on_RAD51 = 0.01; %kinetic rate constant for RAD51 binding
 k_off_RAD51 = 1;    %kinetic rate constant for RAD51 unbinding
@@ -26,7 +26,7 @@ RPA_D = 3;  %represent RPA-D on lattice
 n_A = 10;   %size of RPA-A
 n_D = 10;   %size of RPA-D
 n_RPA = n_A+n_D;
-TotalCount_RPA = 2000;    %total number of RPA proteins that exist
+TotalCount_RPA = (floor(N/n_RPA)/2)-25;    %total number of RPA proteins that exist
 w_RPA = 1;  %cooperativity of RPA (IDK if this is fully included in the model currently)
 k_on_RPA_A = 100;    %kinetic rate constant for RPA-A binding
 k_off_RPA_A = 1;    %kinetic rate constant for RPA-A unbinding
@@ -62,6 +62,7 @@ j = zeros(1,minIterations);
 TotalDiffEvents = 0;
 TotalLeftDiff = 0;
 TotalRightDiff = 0;
+Graph_DNA = zeros(minIterations,N);
 
 Free_Proteins(:,1) = [xRAD51_M(1) ; xRAD51_D(1) ; xRPA(1)];    %starts matrix to count free protein populations
 
@@ -662,6 +663,8 @@ for i = 1:minIterations
     FracCover_RPA_D(Event+1) = numel(find(DNA(2,:) == RPA_D))/N;    %RPA-D Saturation
     FracCover_RPA(Event+1) = FracCover_RPA_A(Event+1)+FracCover_RPA_D(Event+1); %RPA Saturation
     FracCover_Total(Event+1) = FracCover_RPA(Event+1)+FracCover_RAD51(Event+1); %Total Saturation of ssDNA
+    
+    Graph_DNA(Event+1,:) = DNA(2,:);    %state of DNA after each binding/unbinding event (not after each diffusion)
 end
 
 Max_RAD51_Sat = (Free_Proteins(1,1)*n_RAD51)/N; %maximum saturation for RAD51
@@ -691,3 +694,26 @@ ylabel('Population');   ylim([0 max(max(Free_Proteins))]);
 legend([P_FreeRAD51_M,P_FreeRAD51_D,P_Free_RPA],'RAD51 Mon.','RAD51 Dim.','RPA');
 title('Free Protein Populations');
 box on;
+
+Graph_DNA(Graph_DNA == RPA_A) = 2;  %Locations where RPA-A is bound (cyan)
+Graph_DNA(Graph_DNA == 0) = 1;      %Empty locations on DNA lattice (white)
+Graph_DNA(Graph_DNA == RPA_D) = 3;  %Locations where RPA-D is bound (blue)
+Graph_DNA(Graph_DNA == RAD51) = 4;  %Locations where RAD51 is bound (red)
+
+[X_DNA,Y_Time] = meshgrid(1:N,t);
+CustMap = [1, 1, 1; 0, 1, 1; 0, 0, 1; 1, 0, 0];  %custom color range for corresponding proteins (colors labeled above)
+colormap(figure(3),CustMap);
+
+figure(3);  %shows proteins moving over time
+surf(X_DNA,Y_Time,Graph_DNA,'EdgeColor','none');
+set(gca,'Ydir','reverse');  %reverses time axis so beginning is top of figure
+view(2);
+hold on;
+xlabel('ssDNA Location');
+xlim([1 N]);
+ylabel('Time, t (Inverse)');
+ylim([0 max(t)]);
+box on;
+title('RPA Diffusion');
+Bar = colorbar('location','eastoutside','Ticks',[1.375,2.125,2.875,3.625],'TickLabels',{'Empty','RPA-A','RPA-D','RAD51'});
+Bar.TickLength = 0;
