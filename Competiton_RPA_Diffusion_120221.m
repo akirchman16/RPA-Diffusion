@@ -13,11 +13,11 @@ DNA = zeros(2,N);   %represents ssDNA lattice (2nd row is real lattice)
 minIterations = 10000;
 
 %RAD51 Properties/Parameters
-RAD51 = 51; %how RAD51 will be represented on the lattice
+RAD51 = 51;     %how RAD51 will be represented on the lattice
 n_RAD51 = 3;    %size of RAD51 protein
-TotalCount_RAD51 = (floor(N/n_RAD51)/2)-25; %number of total RAD51 proteins (monomers)
+TotalCount_RAD51 = (floor((N/n_RAD51)/2))-25; %number of total RAD51 proteins (monomers)
 w_RAD51 = 1;    %cooperativity constant for RAD51
-k_on_RAD51 = 0.01; %kinetic rate constant for RAD51 binding
+k_on_RAD51 = 1; %kinetic rate constant for RAD51 binding
 k_off_RAD51 = 1;    %kinetic rate constant for RAD51 unbinding
 
 %RPA Properties/Parameters
@@ -26,12 +26,12 @@ RPA_D = 3;  %represent RPA-D on lattice
 n_A = 10;   %size of RPA-A
 n_D = 10;   %size of RPA-D
 n_RPA = n_A+n_D;
-TotalCount_RPA = (floor(N/n_RPA)/2)-25;    %total number of RPA proteins that exist
+TotalCount_RPA = (floor((N/n_RPA)/2));    %total number of RPA proteins that exist
 w_RPA = 1;  %cooperativity of RPA (IDK if this is fully included in the model currently)
 k_on_RPA_A = 100;    %kinetic rate constant for RPA-A binding
 k_off_RPA_A = 1;    %kinetic rate constant for RPA-A unbinding
 k_on_RPA_D = 50;    %kinetic rate consant for RPA-D binding
-k_off_RPA_D = 1;    %kinetic rate constant for RPA-D unbinding
+k_off_RPA_D = 100;    %kinetic rate constant for RPA-D unbinding
 
 DiffusionRate = 100;    %RPA Diffusion Rate constant (events/time interval)
 Left_Prob = 0.5;    %probability of left diffusion, when both are possible (value between 0 and 1)
@@ -624,18 +624,83 @@ for i = 1:minIterations
                 end
             elseif DNA(1,RPA_Check-1) == RPA_A   %RPA-A is hinged open
                 if RPA_Check == n_A+1   %if left most possible position is selected (right diffusion only)
+                    if DNA(1,RPA_Check) == 0 && DNA(2,RPA_Check+n_D) == 0 %if diffusion is possible
+                        k(Event,CheckCount) = 19;
+                        DNA(1,RPA_Check:RPA_Check+n_A) = 0;  %clear hinged open RPA-A
+                        DNA(1,RPA_Check+1:RPA_Check+n_A+1) = RPA_A; %diffuse RPA-A
+                        DNA(2,RPA_Check:RPA_Check+(n_D-1)) = 0; %clear RPA-D
+                        DNA(2,RPA_Check+1:RPA_Check+1+(n_D-1)) = RPA_D; %diffuse RPA-D
+                        DiffusionEvents = DiffusionEvents+1;    %update counters
+                        RightDiffCounter = RightDiffCounter+1;
+                        DiffusionOrder(((RPA_Check - DiffusionOrder) <= n_A) & (RPA_Check-DiffusionOrder) > 0) = [];    %clears any other part of the protein that is going to be diffused in future step
+                        RPA_A_HingedOpen(RPA_Check-(n_A):RPA_Check+1-(n_A)) = [0,1];    %updtae location trackers
+                        RPA_D_BoundAtSpot(RPA_Check:RPA_Check+1) = [0,1];
+                    end
                 elseif RPA_Check == N-(n_D-1)   %if right most possible position is selected (left diffusion only)
-                elseif (DNA(2,RPA_Check-n_A) == 0) && (DNA(2,RPA_Check+n_D) ~= 0)  %if protein can only diffuse to the left
-                elseif (DNA(2,RPA_Check-n_A) ~= 0) && (DNA(2,RPA_Check+n_D) == 0) %if protein can only diffuse to the right
-                else    %otherwise it can diffuse in either direction
+                    if DNA(2,RPA_Check-1) == 0 && DNA(1,RPA_Check-(n_A+1)) == 0     %if diffusion is possible...
+                        k(Event,CheckCount) = 20;
+                        DNA(1,RPA_Check-n_A:RPA_Check-1) = 0;   %clear hinged open RPA-A
+                        DNA(1,RPA_Check-n_A-1:RPA_Check-2) = RPA_A; %diffuse RPA-A
+                        DNA(2,RPA_Check:RPA_Check+(n_D-1)) = 0; %clear RPA-D
+                        DNA(2,RPA_Check-1:(RPA_Check-1)+(n_D-1)) = RPA_D;   %diffuse RPA-D
+                        DiffusionEvents = DiffusionEvents+1;    %update counters
+                        LeftDiffCounter = LeftDiffCoutner+1;
+                        DiffusionOrder(((RPA_Check-DiffusionOrder) <= n_A) & (RPA_Check-DiffusionOrder)>0) = [];    %clears any location that is part of this same protein
+                        RPA_A_HingedOpen((RPA_Check-1)-(n_A):(RPA_Check-1)-(n_A)-1) = [1,0];    %updates location trakcers
+                        RPA_D_BoundAtSpot(RPA_Check-1:RPA_Check) = [1,0];
+                    end
+                elseif ((DNA(1,(RPA_Check-1)-n_A) == 0) && (DNA(2,RPA_Check-1) == 0)) && ((DNA(1,RPA_Check) ~= 0) || (DNA(2,RPA_Check+n_D) ~= 0))  %if protein can only diffuse to the left
+                    k(Event,CheckCount) = 21;
+                    DNA(1,RPA_Check-n_A:RPA_Check-1) = 0;   %clear hinged open RPA-A
+                    DNA(1,RPA_Check-n_A-1:RPA_Check-2) = RPA_A; %diffuse RPA-A
+                    DNA(2,RPA_Check:RPA_Check+(n_D-1)) = 0; %clear RPA-D
+                    DNA(2,RPA_Check-1:(RPA_Check-1)+(n_D-1)) = RPA_D;   %diffuse RPA-D
+                    DiffusionEvents = DiffusionEvents+1;    %update counters
+                    LeftDiffCounter = LeftDiffCounter+1;
+                    DiffusionOrder(((RPA_Check-DiffusionOrder) <= n_A) & (RPA_Check-DiffusionOrder)>0) = [];    %clears any location that is part of this same protein
+                    RPA_A_HingedOpen((RPA_Check-1)-(n_A)-1:(RPA_Check-1)-(n_A)) = [1,0];    %updates location trakcers
+                    RPA_D_BoundAtSpot(RPA_Check-1:RPA_Check) = [1,0];
+                elseif ((DNA(1,(RPA_Check) == 0) & DNA(2,RPA_Check+n_D) == 0)) & ((DNA(1,(RPA_Check-1)-n_A) ~= 0) | (DNA(2,RPA_Check-1) ~= 0)) %if protein can only diffuse to the right
+                    k(Event,CheckCount) = 22;
+                    DNA(1,RPA_Check:RPA_Check+n_A) = 0;  %clear hinged open RPA-A
+                    DNA(1,RPA_Check+1:RPA_Check+n_A+1) = RPA_A; %diffuse RPA-A
+                    DNA(2,RPA_Check:RPA_Check+(n_D-1)) = 0; %clear RPA-D
+                    DNA(2,RPA_Check+1:RPA_Check+1+(n_D-1)) = RPA_D; %diffuse RPA-D
+                    DiffusionEvents = DiffusionEvents+1;    %update counters
+                    RightDiffCounter = RightDiffCounter+1;
+                    DiffusionOrder(((RPA_Check - DiffusionOrder) <= n_A) & (RPA_Check-DiffusionOrder) > 0) = [];    %clears any other part of the protein that is going to be diffused in future step
+                    RPA_A_HingedOpen(RPA_Check-(n_A):RPA_Check+1-(n_A)) = [0,1];    %updtae location trackers
+                    RPA_D_BoundAtSpot(RPA_Check:RPA_Check+1) = [0,1];
+                elseif (DNA(1,(RPA_Check-1)-n_A) == 0) && (DNA(1,RPA_Check) == 0) && (DNA(2,RPA_Check-1) == 0) && (DNA(2,RPA_Check+n_D) == 0)    %otherwise it can diffuse in either direction
                     R = rand;
                     if R <= Left_Prob  %random number check for left vs right diffusion when possible
+                        k(Event,CheckCount) = 23;
+                        DNA(1,RPA_Check-n_A:RPA_Check-1) = 0;   %clear hinged open RPA-A
+                        DNA(1,RPA_Check-n_A-1:RPA_Check-2) = RPA_A; %diffuse RPA-A
+                        DNA(2,RPA_Check:RPA_Check+(n_D-1)) = 0; %clear RPA-D
+                        DNA(2,RPA_Check-1:(RPA_Check-1)+(n_D-1)) = RPA_D;   %diffuse RPA-D
+                        DiffusionEvents = DiffusionEvents+1;    %update counters
+                        LeftDiffCounter = LeftDiffCounter+1;
+                        DiffusionOrder(((RPA_Check-DiffusionOrder) <= n_A) & (RPA_Check-DiffusionOrder)>0) = [];    %clears any location that is part of this same protein
+                        RPA_A_HingedOpen((RPA_Check-1)-(n_A):(RPA_Check-1)-(n_A)-1) = [1,0];    %updates location trakcers
+                        RPA_D_BoundAtSpot(RPA_Check-1:RPA_Check) = [1,0];
                     else
+                        k(Event,CheckCount) = 24;
+                        DNA(1,RPA_Check:RPA_Check+n_A) = 0;  %clear hinged open RPA-A
+                        DNA(1,RPA_Check+1:RPA_Check+n_A+1) = RPA_A; %diffuse RPA-A
+                        DNA(2,RPA_Check:RPA_Check+(n_D-1)) = 0; %clear RPA-D
+                        DNA(2,RPA_Check+1:RPA_Check+1+(n_D-1)) = RPA_D; %diffuse RPA-D
+                        DiffusionEvents = DiffusionEvents+1;    %update counters
+                        RightDiffCounter = RightDiffCounter+1;
+                        DiffusionOrder(((RPA_Check - DiffusionOrder) <= n_A) & (RPA_Check-DiffusionOrder) > 0) = [];    %clears any other part of the protein that is going to be diffused in future step
+                        RPA_A_HingedOpen(RPA_Check-(n_A):RPA_Check+1-(n_A)) = [0,1];    %updtae location trackers
+                        RPA_D_BoundAtSpot(RPA_Check:RPA_Check+1) = [0,1];
                     end
                 end
             end
         end
         RPA_Check_Tracker(Event,CheckCount) = RPA_Check;    %records order of where RPA proteins were chosen to diffuse (use with k to track all diffusions)
+        
         if round((numel(find(DNA(1,:) == RPA_A))/n_A)) ~= (numel(find(DNA(1,:) == RPA_A))/n_A)
             disp('BROKEN RPA-A (OPEN) - DIFFUSION');
             break;
