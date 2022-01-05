@@ -7,7 +7,7 @@ close all;
 % will have the possibility to diffuse along the lattice if they're able
 % to. This will be set by the RPA_DiffusionProb.
 
-N = 5000;   %ssDNA length
+N = 1000;   %ssDNA length
 DNA = zeros(2,N);   %represents ssDNA lattice (2nd row is real lattice)
 
 minIterations = 10000;
@@ -26,7 +26,7 @@ RPA_D = 3;  %represent RPA-D on lattice
 n_A = 10;   %size of RPA-A
 n_D = 10;   %size of RPA-D
 n_RPA = n_A+n_D;
-TotalCount_RPA = 2000;    %total number of RPA proteins that exist
+TotalCount_RPA = 500;    %total number of RPA proteins that exist
 w_RPA = 1;  %cooperativity of RPA (IDK if this is fully included in the model currently)
 k_on_RPA_A = 100;    %kinetic rate constant for RPA-A binding
 k_off_RPA_A = 1;    %kinetic rate constant for RPA-A unbinding
@@ -197,21 +197,6 @@ for i = 1:minIterations
     RAD51_Dim_BoundAtSpot(Left_RAD51_Dimer_Filament) = 1;   %records where all possible dimers are located
     x_Bound_RAD51_D = numel(find(RAD51_Dim_BoundAtSpot == 1)); %number of RAD51 Dimers bound to lattice
     
-    RPA_A_AvailableForHingeOpen = [];
-    RPA_D_AvailableForHingeOpen = [];
-    for RPA_A_HingeCheck = find(RPA_A_BoundAtSpot == 1)
-        if DNA(1,RPA_A_HingeCheck:RPA_A_HingeCheck+(n_A-1)) == 0    %if space is free above protein...
-            RPA_A_AvailableForHingeOpen = [RPA_A_AvailableForHingeOpen,RPA_A_HingeCheck];   %...record it
-        end
-    end
-    for RPA_D_HingeCheck = find(RPA_D_BoundAtSpot == 1)
-        if DNA(1,RPA_D_HingeCheck:RPA_D_HingeCheck+(n_D-1)) == 0    %if space is free above protein...
-            RPA_D_AvailableForHingeOpen = [RPA_D_AvailableForHingeOpen,RPA_D_HingeCheck];   %...record it
-        end
-    end
-    x_Bound_RPA_A_HingeOpen = numel(RPA_A_AvailableForHingeOpen);   %number of bound RPA-A proteins which can hinge open
-    x_Bound_RPA_D_HingeOpen = numel(RPA_D_AvailableForHingeOpen);   %number of bound RPA-D proteins which can hinge open
-    
     Available_Counts = [numel(RAD51_Mon_I),numel(RAD51_Mon_SC),numel(RAD51_Mon_DC),numel(RAD51_Dim_I),numel(RAD51_Dim_SC),numel(RAD51_Dim_DC),numel(RPA_I),numel(RPA_SC),numel(RPA_DC)];
                 %populations of the available locations listed in order
                 % 1 - RAD51 Monomer Isolated
@@ -223,7 +208,7 @@ for i = 1:minIterations
                 % 7 - RPA Isolated
                 % 8 - RPA Singly Contiguous
                 % 9 - RPA Doubly Contiguous
-     Bound_Counts = [x_Bound_RAD51_M,x_Bound_RAD51_D,x_Bound_RPA_A,x_Bound_RPA_D];  %counts of how many bound proteins of each type (and are free to do the corresponding reaction)
+     Bound_Counts = [x_Bound_RAD51_M,x_Bound_RAD51_D,x_Bound_RPA_A,x_Bound_RPA_D];  %counts of how many bound proteins of each type
                 % 1 - RAD51 Monomer
                 % 2 - RAD51 Dimer
                 % 3 - RPA-A
@@ -233,7 +218,7 @@ for i = 1:minIterations
     a_RAD51_Dim = [k_on_RAD51*Available_Counts(4)*Free_Proteins(2,Event);k_on_RAD51*Available_Counts(5)*Free_Proteins(2,Event)*w_RAD51;k_on_RAD51*Available_Counts(6)*Free_Proteins(2,Event)*(w_RAD51^2)];  %propensity functions for RAD51 Dimer binding
     a_RPA_Macro = [k_on_RPA_A*Available_Counts(7)*Free_Proteins(3,Event);k_on_RPA_A*Available_Counts(8)*Free_Proteins(3,Event)*w_RPA;k_on_RPA_A*Available_Counts(9)*Free_Proteins(3,Event)*(w_RPA^2)];  %propensity functions for RPA Macro binding
     a_RAD51_Unbind = [k_off_RAD51*Bound_Counts(1);k_off_RAD51*Bound_Counts(2)]; %propensity functions for RAD51 unbinding
-    a_RPA_Micro = [k_on_RPA_A*Available_HingeClosed(1)*numel(find(RPA_A_HingedOpen == 1));k_on_RPA_D*Available_HingeClosed(2)*numel(find(RPA_D_HingedOpen == 1));k_off_RPA_A*x_Bound_RPA_A_HingeOpen;k_off_RPA_D*x_Bound_RPA_D_HingeOpen];    %propensity functions for RPA Microscopic binding and unbinding
+    a_RPA_Micro = [k_on_RPA_A*Available_HingeClosed(1)*numel(find(RPA_A_HingedOpen == 1));k_on_RPA_D*Available_HingeClosed(2)*numel(find(RPA_D_HingedOpen == 1));k_off_RPA_A*Bound_Counts(3);k_off_RPA_D*Bound_Counts(4)];    %propensity functions for RPA Microscopic binding and unbinding
     a_Prop(:,Event) = [a_RAD51_Mon;a_RAD51_Dim;a_RPA_Macro;a_RAD51_Unbind;a_RPA_Micro];  %all propensity functions together
     a_0(Event) = sum(a_Prop(:,Event));  %sum of propensity functions (for event selection)
 
@@ -345,8 +330,8 @@ for i = 1:minIterations
         Free_Proteins(:,Event+1) = Free_Proteins(:,Event);  %free protein counter remains the same
     elseif sum(a_Prop(1:14,Event)) >= Randoms(2)*a_0(Event) %RPA-A Microscopic Unbinding
         j(Event) = 14;
-        %RPA_A_Bound_Proteins = find(RPA_A_BoundAtSpot == 1);    %list of all locations where RPA-A is bound
-        RPA_A_Micro_Unbind_Loc = RPA_A_AvailableForHingeOpen(randi(numel(RPA_A_AvailableForHingeOpen)));  %random RPA-A to micro dissociate
+        RPA_A_Bound_Proteins = find(RPA_A_BoundAtSpot == 1);    %list of all locations where RPA-A is bound
+        RPA_A_Micro_Unbind_Loc = RPA_A_Bound_Proteins(randi(numel(RPA_A_Bound_Proteins)));  %random RPA-A to micro dissociate
         DNA(2,RPA_A_Micro_Unbind_Loc:RPA_A_Micro_Unbind_Loc+(n_A-1)) = 0;   %unbinds RPA-A
         DNA(1,RPA_A_Micro_Unbind_Loc:RPA_A_Micro_Unbind_Loc+(n_A-1)) = RPA_A;   %hinges RPA-A open
         RPA_A_BoundAtSpot(RPA_A_Micro_Unbind_Loc) = 0;  %RPA-A is no longer bound here currently
@@ -361,8 +346,8 @@ for i = 1:minIterations
         end
     elseif sum(a_Prop(1:15,Event)) >= Randoms(2)*a_0(Event) %RPA-D Microscopic Unbinding
         j(Event) = 15;
-        %RPA_D_Bound_Proteins = find(RPA_D_BoundAtSpot == 1);    %list of all locations where RPA-D is bound
-        RPA_D_Micro_Unbind_Loc = RPA_D_AvailableForHingeOpen(randi(numel(RPA_D_AvailableForHingeOpen)));  %random RPA-D to micro dissociate
+        RPA_D_Bound_Proteins = find(RPA_D_BoundAtSpot == 1);    %list of all locations where RPA-D is bound
+        RPA_D_Micro_Unbind_Loc = RPA_D_Bound_Proteins(randi(numel(RPA_D_Bound_Proteins)));  %random RPA-D to micro dissociate
         DNA(2,RPA_D_Micro_Unbind_Loc:RPA_D_Micro_Unbind_Loc+(n_D-1)) = 0;   %unbinds RPA-D
         DNA(1,RPA_D_Micro_Unbind_Loc:RPA_D_Micro_Unbind_Loc+(n_D-1)) = RPA_D;   %hinges RPA-D open
         RPA_D_BoundAtSpot(RPA_D_Micro_Unbind_Loc) = 0;  %RPA-D is no longer bound here currently
@@ -403,6 +388,9 @@ for i = 1:minIterations
     LeftDiffCounter = 0;    %counts number of left diffusion events
     RightDiffCounter = 0;   %number of right diffusion events
     while DiffusionEvents <= DiffusionCountCheck & (CheckCount+1) <= numel(DiffusionOrder)    %checks for diffusion at each protein until all have ben checked or the right amount of events have occured
+%         if numel(find(DNA(1,:) == RPA_D))/n_D ~= round(numel(find(DNA(1,:) == RPA_D))/n_D)
+%             find(DNA(1,:) == RPA_D);
+%         end
         CheckCount = CheckCount+1;
         RPA_Check = DiffusionOrder(CheckCount); %random protein to be checked
         if (DNA(2,RPA_Check) == RPA_A)    %if the selected protein is RPA-A...
@@ -671,7 +659,8 @@ Max_RPA_Sat = (Free_Proteins(3,1)*n_RPA)/N; %maximum saturation for RPA
 Max_Sat = ((Free_Proteins(1,1)*n_RAD51)+(Free_Proteins(3,1)*n_RPA))/N;   %maximum total saturation
 
 figure(1);  %Saturation Plot
-P_RAD51 = scatter(t,FracCover_RAD51,1,'red','filled'); hold on; yline(Max_RAD51_Sat,'--red');
+P_RAD51 = scatter(t,FracCover_RAD51,1,'red','filled');    hold on;
+yline(Max_RAD51_Sat,'--red');
 P_RPA_A = scatter(t,FracCover_RPA_A,1,'cyan','filled'); yline(Max_RPA_A_Sat,'--cyan');
 P_RPA_D = scatter(t,FracCover_RPA_D,1,'blue','filled'); yline(Max_RPA_D_Sat,'--blue');
 P_RPA = scatter(t,FracCover_RPA,1,'magenta','filled');  yline(Max_RPA_Sat,'--magenta');
@@ -687,7 +676,6 @@ P_FreeRAD51_M = scatter(t,Free_Proteins(1,:),1,'r','filled');   hold on;
 P_FreeRAD51_D = scatter(t,Free_Proteins(2,:),1,'b','filled');
 P_Free_RPA = scatter(t,Free_Proteins(3,:),1,'g','filled');
 xlabel('Time, t'); xlim([0 max(t)]);
-ylabel('Population');   ylim([0 max(max(Free_Proteins))]);
+ylabel('Population');   ylim([0 sum(Free_Proteins(1))]);
 legend([P_FreeRAD51_M,P_FreeRAD51_D,P_Free_RPA],'RAD51 Mon.','RAD51 Dim.','RPA');
-title('Free Protein Populations');
 box on;
