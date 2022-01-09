@@ -7,17 +7,17 @@ close all;
 % will have the possibility to diffuse along the lattice if they're able
 % to. This will be set by the RPA_DiffusionProb.
 
-N = 1000;   %ssDNA length
+N = 5000;   %ssDNA length
 DNA = zeros(2,N);   %represents ssDNA lattice (2nd row is real lattice)
 
-minIterations = 100000;
+minIterations = 100;
 
 %RAD51 Properties/Parameters
 RAD51 = 51;     %how RAD51 will be represented on the lattice
 n_RAD51 = 3;    %size of RAD51 protein
-TotalCount_RAD51 = 115; %number of total RAD51 proteins (monomers)
+TotalCount_RAD51 = 5000; %number of total RAD51 proteins (monomers)
 w_RAD51 = 1;    %cooperativity constant for RAD51
-k_on_RAD51 = 25; %kinetic rate constant for RAD51 binding
+k_on_RAD51 = 1; %kinetic rate constant for RAD51 binding
 k_off_RAD51 = 1;    %kinetic rate constant for RAD51 unbinding
 
 %RPA Properties/Parameters
@@ -26,11 +26,11 @@ RPA_D = 3;  %represent RPA-D on lattice
 n_A = 10;   %size of RPA-A
 n_D = 10;   %size of RPA-D
 n_RPA = n_A+n_D;
-TotalCount_RPA = 15;    %total number of RPA proteins that exist
+TotalCount_RPA = 5000;    %total number of RPA proteins that exist
 w_RPA = 1;  %cooperativity of RPA (IDK if this is fully included in the model currently)
-k_on_RPA_A = 100;    %kinetic rate constant for RPA-A binding
+k_on_RPA_A = 20;    %kinetic rate constant for RPA-A binding
 k_off_RPA_A = 1;    %kinetic rate constant for RPA-A unbinding
-k_on_RPA_D = 50;    %kinetic rate consant for RPA-D binding
+k_on_RPA_D = 7;    %kinetic rate consant for RPA-D binding
 k_off_RPA_D = 10;    %kinetic rate constant for RPA-D unbinding
 
 DiffusionRate = 10000;    %RPA Diffusion Rate constant (events/time interval)
@@ -63,6 +63,8 @@ TotalDiffEvents = 0;
 TotalLeftDiff = 0;
 TotalRightDiff = 0;
 Graph_DNA = zeros(minIterations,N);
+RPA_Yint_Error = zeros(1,minIterations+1);
+RAD51_Yint_Error = zeros(1,minIterations+1);
 
 Free_Proteins(:,1) = [xRAD51_M(1) ; xRAD51_D(1) ; xRPA(1)];    %starts matrix to count free protein populations
 
@@ -71,8 +73,8 @@ Equilibrium_RAD51 = 0;
 Equilibrium = double(Equilibrium_RPA && Equilibrium_RAD51);
 Event = 0;
 Broken = 0;
-% while Equilibrium ~= 1
-for i = 1:minIterations
+while Equilibrium ~= 1
+% for i = 1:minIterations
     Event = Event+1;
     
 %%% Lattice Search Process %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -737,8 +739,34 @@ for i = 1:minIterations
     
     Graph_DNA(Event+1,:) = DNA(2,:);    %state of DNA after each binding/unbinding event (not after each diffusion)
     
-    if Broken == 1
-        break
+    % Equilibrium Test %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    if Event > minIterations
+        t_Equilibrium_Test = t(end-round(0.25*(Event+1)):end);  %time values that we're testing for equilibrium
+        RPA_Equilibrium_Test = FracCover_RPA((end-round(0.25*(Event+1))):end);   %last 1/4 of Events saturation data for RPA
+        RAD51_Equilibrium_Test = FracCover_RAD51((end-round(0.25*(Event+1))):end);   %last 1/4 of Events saturation data for RAD51
+
+        RPA_Avg_Saturation_Holder = sum(RPA_Equilibrium_Test)/numel(RPA_Equilibrium_Test); %average saturation in last 1/4 of Events (RPA)
+        RAD51_Avg_Saturation_Holder = sum(RAD51_Equilibrium_Test)/numel(RAD51_Equilibrium_Test);   %average saturation in last 1/4 of Events (RAD51)
+
+        RAD51_Fit = polyfit(t_Equilibrium_Test,RAD51_Equilibrium_Test,1);   %linear fit for RAD51 data (slope, y-int)
+        RAD51_Yint_Error(Event+1) = abs(RAD51_Avg_Saturation_Holder-RAD51_Fit(2))/RAD51_Avg_Saturation_Holder; %y-intercept error of linear fit for RAD51 data
+        RPA_Fit = polyfit(t_Equilibrium_Test,RPA_Equilibrium_Test,1);   %linear fit to RPA data (slope, y-int)
+        RPA_Yint_Error(Event+1) = abs(RPA_Avg_Saturation_Holder-RPA_Fit(2))/RPA_Avg_Saturation_Holder;    %y-intercept error compared to average RPA saturation
+
+        if abs(RPA_Fit(1)) < 0.01 & (RPA_Yint_Error(Event+1) < 0.05 | isnan(RPA_Yint_Error(Event+1)))   %if slope of RPA data is essentially zero and y-intercept is very close to avg. saturation value... (slope limit is change in saturation of 1% (~17 proteins) per 1 time interval)
+            Equilibrium_RPA = 1;    %...then at equilibrium
+        else
+            Equilibrium_RPA = 0;    %...otherwise reset to not at equilibrium
+        end
+        if abs(RAD51_Fit(1)) < 0.01 & (RAD51_Yint_Error(Event+1) < 0.05 | isnan(RAD51_Yint_Error(Event+1))) %if the slope of RAD51 data is essentially zero and y-intercept is very close to avg. saturation value... (slope limit is change in saturation of 1% (~3 proteins) per 1 time interval)
+            Equilibrium_RAD51 = 1;  %...then we're at equilibrium
+        else
+            Equilibrium_RAD51 = 0;    %...otherwise reset to not at equilibrium
+        end
+    end
+    Equilibrium = double(Equilibrium_RPA && Equilibrium_RAD51);
+    if Broken == 1 || Event > (N*3)
+        break;
     end
 end
 
@@ -749,7 +777,7 @@ Max_RPA_Sat = (Free_Proteins(3,1)*n_RPA)/N; %maximum saturation for RPA
 Max_Sat = ((Free_Proteins(1,1)*n_RAD51)+(Free_Proteins(3,1)*n_RPA))/N;   %maximum total saturation
 
 figure(1);  %Saturation Plot
-subplot(2,1,1);
+% subplot(2,1,1);
 P_RAD51 = scatter(t,FracCover_RAD51,1,'red','filled'); hold on; yline(Max_RAD51_Sat,'--red');
 P_RPA_A = scatter(t,FracCover_RPA_A,1,'cyan','filled'); yline(Max_RPA_A_Sat,'--cyan');
 P_RPA_D = scatter(t,FracCover_RPA_D,1,'blue','filled'); yline(Max_RPA_D_Sat,'--blue');
@@ -761,16 +789,16 @@ title('RAD51/RPA Competition Saturation');
 legend([P_RAD51,P_RPA_A,P_RPA_D,P_RPA,P_Total],'RAD51','RPA-A','RPA-D','All RPA','Total','location','southoutside','orientation','horizontal');
 box on;
 
-figure(1);    %Free Protein Count Plot
-subplot(2,1,2);
-P_FreeRAD51_M = scatter(t,Free_Proteins(1,:),1,'r','filled');   hold on;
-P_FreeRAD51_D = scatter(t,Free_Proteins(2,:),1,'b','filled');
-P_Free_RPA = scatter(t,Free_Proteins(3,:),1,'g','filled');
-xlabel('Time, t'); xlim([0 max(t)]);
-ylabel('Population');   ylim([0 max(max(Free_Proteins))]);
-legend([P_FreeRAD51_M,P_FreeRAD51_D,P_Free_RPA],'RAD51 Mon.','RAD51 Dim.','RPA');
-title('Free Protein Populations');
-box on;
+% figure(1);    %Free Protein Count Plot
+% subplot(2,1,2);
+% P_FreeRAD51_M = scatter(t,Free_Proteins(1,:),1,'r','filled');   hold on;
+% P_FreeRAD51_D = scatter(t,Free_Proteins(2,:),1,'b','filled');
+% P_Free_RPA = scatter(t,Free_Proteins(3,:),1,'g','filled');
+% xlabel('Time, t'); xlim([0 max(t)]);
+% ylabel('Population');   ylim([0 max(max(Free_Proteins))]);
+% legend([P_FreeRAD51_M,P_FreeRAD51_D,P_Free_RPA],'RAD51 Mon.','RAD51 Dim.','RPA');
+% title('Free Protein Populations');
+% box on;
 
 Graph_DNA(Graph_DNA == RPA_A) = 2;  %Locations where RPA-A is bound (cyan)
 Graph_DNA(Graph_DNA == 0) = 1;      %Empty locations on DNA lattice (white)
@@ -794,3 +822,18 @@ box on;
 title('RPA Diffusion');
 Bar = colorbar('location','eastoutside','Ticks',[1.375,2.125,2.875,3.625],'TickLabels',{'Empty','RPA-A','RPA-D','RAD51'});
 Bar.TickLength = 0;
+
+fig3 = figure(3);
+box on;
+left_color = [1,0,0];   %RAD51 color (red)
+right_color = [1,0,1];    %RPA color (magenta)
+set(fig3,'defaultAxesColorOrder',[left_color; right_color]);
+yyaxis left;
+P_RAD51_Yint_Error = scatter(t(2:end),RAD51_Yint_Error(2:end),3,'r','o','filled'); hold on;
+ylim([0 max(max([RAD51_Yint_Error,RPA_Yint_Error]))]);  xlim([0 max(t)]);
+xlabel('Time, t'); title('Y-Int. %Error');
+ylabel('RAD51');
+yyaxis right;
+P_RPA_Yint_Error = scatter(t(2:end),RPA_Yint_Error(2:end),3,'magenta','o','filled'); hold on;
+ylabel('RPA');
+ylim([0 max(max([RAD51_Yint_Error,RPA_Yint_Error]))]);  xlim([0 max(t)]);
