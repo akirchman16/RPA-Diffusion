@@ -7,7 +7,7 @@ close all;
 % will have the possibility to diffuse along the lattice if they're able
 % to. This will be set by the RPA_DiffusionProb.
 
-N = 5000;   %ssDNA length
+N = 1000;   %ssDNA length
 DNA = zeros(2,N);   %represents ssDNA lattice (2nd row is real lattice)
 
 minIterations = 100;
@@ -15,7 +15,7 @@ minIterations = 100;
 %RAD51 Properties/Parameters
 RAD51 = 51;     %how RAD51 will be represented on the lattice
 n_RAD51 = 3;    %size of RAD51 protein
-TotalCount_RAD51 = 5000; %number of total RAD51 proteins (monomers)
+TotalCount_RAD51 = 300; %number of total RAD51 proteins (monomers)
 w_RAD51 = 1;    %cooperativity constant for RAD51
 k_on_RAD51 = 1; %kinetic rate constant for RAD51 binding
 k_off_RAD51 = 1;    %kinetic rate constant for RAD51 unbinding
@@ -26,11 +26,11 @@ RPA_D = 3;  %represent RPA-D on lattice
 n_A = 10;   %size of RPA-A
 n_D = 10;   %size of RPA-D
 n_RPA = n_A+n_D;
-TotalCount_RPA = 5000;    %total number of RPA proteins that exist
+TotalCount_RPA = 40;    %total number of RPA proteins that exist
 w_RPA = 1;  %cooperativity of RPA (IDK if this is fully included in the model currently)
-k_on_RPA_A = 20;    %kinetic rate constant for RPA-A binding
+k_on_RPA_A = 100;    %kinetic rate constant for RPA-A binding
 k_off_RPA_A = 1;    %kinetic rate constant for RPA-A unbinding
-k_on_RPA_D = 7;    %kinetic rate consant for RPA-D binding
+k_on_RPA_D = 50;    %kinetic rate consant for RPA-D binding
 k_off_RPA_D = 10;    %kinetic rate constant for RPA-D unbinding
 
 DiffusionRate = 10000;    %RPA Diffusion Rate constant (events/time interval)
@@ -779,8 +779,8 @@ Max_Sat = ((Free_Proteins(1,1)*n_RAD51)+(Free_Proteins(3,1)*n_RPA))/N;   %maximu
 figure(1);  %Saturation Plot
 % subplot(2,1,1);
 P_RAD51 = scatter(t,FracCover_RAD51,1,'red','filled'); hold on; yline(Max_RAD51_Sat,'--red');
-P_RPA_A = scatter(t,FracCover_RPA_A,1,'cyan','filled'); yline(Max_RPA_A_Sat,'--cyan');
-P_RPA_D = scatter(t,FracCover_RPA_D,1,'blue','filled'); yline(Max_RPA_D_Sat,'--blue');
+P_RPA_A = scatter(t,FracCover_RPA_A,1,'cyan','filled'); %yline(Max_RPA_A_Sat,'--cyan');
+P_RPA_D = scatter(t,FracCover_RPA_D,1,'blue','filled'); %yline(Max_RPA_D_Sat,'--blue');
 P_RPA = scatter(t,FracCover_RPA,1,'magenta','filled');  yline(Max_RPA_Sat,'--magenta');
 P_Total = scatter(t,FracCover_Total,1,'k','filled');    yline(Max_Sat,'--k');
 xlabel('Time, t'); xlim([0 max(t)]);
@@ -823,17 +823,17 @@ title('RPA Diffusion');
 Bar = colorbar('location','eastoutside','Ticks',[1.375,2.125,2.875,3.625],'TickLabels',{'Empty','RPA-A','RPA-D','RAD51'});
 Bar.TickLength = 0;
 
-fig3 = figure(3);
-box on;
-left_color = [1,0,0];   %RAD51 color (red)
-right_color = [1,0,1];    %RPA color (magenta)
-set(fig3,'defaultAxesColorOrder',[left_color; right_color]);
-yyaxis left;
-P_RAD51_Yint_Error = scatter(t(2:end),RAD51_Yint_Error(2:end),3,'r','o','filled'); hold on;
-ylim([0 max(max([RAD51_Yint_Error,RPA_Yint_Error]))]);  xlim([0 max(t)]);
-xlabel('Time, t'); title('Y-Int. %Error');
-ylabel('RAD51');
-yyaxis right;
-P_RPA_Yint_Error = scatter(t(2:end),RPA_Yint_Error(2:end),3,'magenta','o','filled'); hold on;
-ylabel('RPA');
-ylim([0 max(max([RAD51_Yint_Error,RPA_Yint_Error]))]);  xlim([0 max(t)]);
+% fig3 = figure(3);
+% box on;
+% left_color = [1,0,0];   %RAD51 color (red)
+% right_color = [1,0,1];    %RPA color (magenta)
+% set(fig3,'defaultAxesColorOrder',[left_color; right_color]);
+% yyaxis left;
+% P_RAD51_Yint_Error = scatter(t(2:end),RAD51_Yint_Error(2:end),3,'r','o','filled'); hold on;
+% ylim([0 max(max([RAD51_Yint_Error,RPA_Yint_Error]))]);  xlim([0 max(t)]);
+% xlabel('Time, t'); title('Y-Int. %Error');
+% ylabel('RAD51');
+% yyaxis right;
+% P_RPA_Yint_Error = scatter(t(2:end),RPA_Yint_Error(2:end),3,'magenta','o','filled'); hold on;
+% ylabel('RPA');
+% ylim([0 max(max([RAD51_Yint_Error,RPA_Yint_Error]))]);  xlim([0 max(t)]);
