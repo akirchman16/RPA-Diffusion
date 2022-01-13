@@ -782,6 +782,10 @@ while Equilibrium ~= 1
         break;
     end
     SimTime_Event(Event) = toc(SimTime_Event_Start);
+    
+    if (numel(SimTime_Event)) ~= (numel(SimTime_Diffusion)
+        break;
+    end
 end
 
 Max_RAD51_Sat = (Free_Proteins(1,1)*n_RAD51)/N; %maximum saturation for RAD51
