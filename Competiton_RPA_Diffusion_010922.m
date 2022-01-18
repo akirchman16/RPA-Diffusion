@@ -17,8 +17,8 @@ RAD51 = 51;     %how RAD51 will be represented on the lattice
 n_RAD51 = 3;    %size of RAD51 protein
 TotalCount_RAD51 = 300; %number of total RAD51 proteins (monomers)
 w_RAD51 = 1;    %cooperativity constant for RAD51
-k_on_RAD51 = 1; %kinetic rate constant for RAD51 binding
-k_off_RAD51 = 1;    %kinetic rate constant for RAD51 unbinding
+k_on_RAD51 = 0.1; %kinetic rate constant for RAD51 binding
+k_off_RAD51 = 10;    %kinetic rate constant for RAD51 unbinding
 
 %RPA Properties/Parameters
 RPA_A = 1; %represent RPA-A on lattice
@@ -26,15 +26,15 @@ RPA_D = 3;  %represent RPA-D on lattice
 n_A = 10;   %size of RPA-A
 n_D = 10;   %size of RPA-D
 n_RPA = n_A+n_D;
-TotalCount_RPA = 40;    %total number of RPA proteins that exist
+TotalCount_RPA = 50;    %total number of RPA proteins that exist
 w_RPA = 1;  %cooperativity of RPA (IDK if this is fully included in the model currently)
 k_on_RPA_A = 100;    %kinetic rate constant for RPA-A binding
-k_off_RPA_A = 1;    %kinetic rate constant for RPA-A unbinding
-k_on_RPA_D = 50;    %kinetic rate consant for RPA-D binding
+k_off_RPA_A = 5;    %kinetic rate constant for RPA-A unbinding
+k_on_RPA_D = 30;    %kinetic rate consant for RPA-D binding
 k_off_RPA_D = 10;    %kinetic rate constant for RPA-D unbinding
 
-DiffusionRate = 10000;    %RPA Diffusion Rate constant (events/time interval)
-Left_Prob = 0.5;    %probability of left diffusion, when both are possible (value between 0 and 1)
+DiffusionRate = 100000;    %RPA Diffusion Rate constant (events/time interval)
+Left_Prob = 0.8;    %probability of left diffusion, when both are possible (value between 0 and 1)
 Right_Prob = 1-Left_Prob;
 
 %Memory Allocation
@@ -769,6 +769,13 @@ while Equilibrium ~= 1
         break;
     end
 end
+
+LeftDiffError = (abs((TotalLeftDiff/TotalDiffEvents)-Left_Prob)/Left_Prob)*100;   %Percent Error of Left Diffusion events
+RightDiffError = (abs((TotalRightDiff/TotalDiffEvents)-Right_Prob)/Right_Prob)*100;   %Percent Error of Right Diffusion events
+TotalDiffError = (abs(TotalDiffEvents-(DiffusionRate*t(end)))/(DiffusionRate*t(end)))*100;  %Percent Error of Total Diffusion Events
+disp(['Diff. % Error: ', num2str(round(TotalDiffError,1)), '%']);
+disp(['Left % Error: ', num2str(round(LeftDiffError,1)), '%']);
+disp(['Right % Error: ', num2str(round(RightDiffError,1)), '%']);
 
 Max_RAD51_Sat = (Free_Proteins(1,1)*n_RAD51)/N; %maximum saturation for RAD51
 Max_RPA_A_Sat = (Free_Proteins(3,1)*n_A)/N; %maximum saturation for RPA-A
