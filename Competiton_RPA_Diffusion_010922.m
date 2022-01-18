@@ -1,11 +1,11 @@
 clearvars;
 close all;
-
+Total_Start = tic;
 % This code will be a competition model between RPA and RAD51. It will run
 % in the same manner as the codes which generated heatmaps but without
 % multiple runs. It will only test a single set of paramters. RPA molecules
 % will have the possibility to diffuse along the lattice if they're able
-% to. This will be set by the RPA_DiffusionProb.
+% to. This will be set by DiffusionRate.
 
 N = 1000;   %ssDNA length
 DNA = zeros(2,N);   %represents ssDNA lattice (2nd row is real lattice)
@@ -778,7 +778,7 @@ while Equilibrium ~= 1
     end
     Equilibrium = double(Equilibrium_RPA && Equilibrium_RAD51);
     SimTime_Equilibrium(Event) = toc(SimTime_Equilibrium_Start);
-    if Broken == 1 || Event > (N*3)
+    if Broken == 1 %|| Event > (N*3)
         break;
     end
     SimTime_Event(Event) = toc(SimTime_Event_Start);
@@ -853,16 +853,29 @@ Bar.TickLength = 0;
 % ylim([0 max(max([RAD51_Yint_Error,RPA_Yint_Error]))]);  xlim([0 max(t)]);
 
 SimTime_Fractions = [SimTime_LatticeSearch./SimTime_Event;SimTime_SSA./SimTime_Event;SimTime_Diffusion./SimTime_Event;SimTime_Equilibrium./SimTime_Event];  %fraction of time spent in each segment of an event for each event
-SimTime_Averages = [mean(SimTime_Fractions(1,:));mean(SimTime_Fractions(2,:));mean(SimTime_Fractions(3,:));mean(SimTime_Fractions(4,:))];   %average value spent in each segment of an event
+SimTime_AverageFrac = [mean(SimTime_Fractions(1,:));mean(SimTime_Fractions(2,:));mean(SimTime_Fractions(3,:));mean(SimTime_Fractions(4,:))];   %average value spent in each segment of an event
+SimTime_All = [SimTime_LatticeSearch;SimTime_SSA;SimTime_Diffusion;SimTime_Equilibrium]; %total time in each steps (seconds)
 X = 1:Event;
 
 figure(4);
-LS = scatter(X,SimTime_Fractions(1,:),2,'r','o','filled');    hold on;
-SSA = scatter(X,SimTime_Fractions(2,:),2,'g','o','filled');
-Diff = scatter(X,SimTime_Fractions(3,:),2,'b','o','filled');
-Eq = scatter(X,SimTime_Fractions(4,:),2,'m','o','filled');
+LS_F = scatter(X,SimTime_Fractions(1,:),2,'r','o','filled');    hold on;
+SSA_F = scatter(X,SimTime_Fractions(2,:),2,'g','o','filled');
+Diff_F = scatter(X,SimTime_Fractions(3,:),2,'b','o','filled');
+Eq_F = scatter(X,SimTime_Fractions(4,:),2,'m','o','filled');
 title('Fraction of Time in Segment');   xlabel('Event #');  ylabel('Fraction');
 xlim([0 Event]);    ylim([0 1]); box on;
-yline(SimTime_Averages(1,:),'--r',['Lattice Search: ', num2str(round(SimTime_Averages(1,:),2))]); yline(SimTime_Averages(2,:),'--g',['SSA: ', num2str(round(SimTime_Averages(2,:),2))]);
-yline(SimTime_Averages(3,:),'--b',['Diffusion: ', num2str(round(SimTime_Averages(3,:),2))]); yline(SimTime_Averages(4,:),'--m',['Equilibrium: ', num2str(round(SimTime_Averages(4,:),2))]);
-legend([LS,SSA,Diff,Eq],{['Lattice Search ', num2str(round(SimTime_Averages(1,:),2))],['SSA ', num2str(round(SimTime_Averages(2,:),2))],['Diffusion ', num2str(round(SimTime_Averages(3,:),2))],['Equilirbrium ', num2str(round(SimTime_Averages(4,:),2))]});
+yline(SimTime_AverageFrac(1,:),'--r',['Lattice Search: ', num2str(round(SimTime_AverageFrac(1,:),2))]); yline(SimTime_AverageFrac(2,:),'--g',['SSA: ', num2str(round(SimTime_AverageFrac(2,:),2))]);
+yline(SimTime_AverageFrac(3,:),'--b',['Diffusion: ', num2str(round(SimTime_AverageFrac(3,:),2))]); yline(SimTime_AverageFrac(4,:),'--m',['Equilibrium: ', num2str(round(SimTime_AverageFrac(4,:),2))]);
+legend([LS_F,SSA_F,Diff_F,Eq_F],{['Lattice Search: ', num2str(round(SimTime_AverageFrac(1,:),2))],['SSA: ', num2str(round(SimTime_AverageFrac(2,:),2))],['Diffusion: ', num2str(round(SimTime_AverageFrac(3,:),2))],['Equilirbrium: ', num2str(round(SimTime_AverageFrac(4,:),2))]});
+figure(5);
+LS_A = scatter(X,SimTime_All(1,:),2,'r','o','filled');  hold on;
+SSA_A = scatter(X,SimTime_All(2,:),2,'g','o','filled');
+Diff_A = scatter(X,SimTime_All(3,:),2,'b','o','filled');
+Eq_A = scatter(X,SimTime_All(4,:),2,'m','o','filled');
+title(['Total Time (Avg: ', num2str(round(mean(SimTime_Event),3)), 's)']);    xlabel('Event #');  ylabel('Time (s)');
+xlim([0 Event]);    ylim([0 max(max(SimTime_All))]);    box on;
+yline(mean(SimTime_All(1,:)),'--r',['Lattice Search: ', num2str(round(mean(SimTime_All(1,:)),3))]); yline(mean(SimTime_All(2,:)),'--g',['SSA: ', num2str(round(mean(SimTime_All(2,:)),3))]);
+yline(mean(SimTime_All(3,:)),'--b',['Diffusion: ', num2str(round(mean(SimTime_All(3,:)),3))]); yline(mean(SimTime_All(4,:)),'--m',['Equilibrium: ', num2str(round(mean(SimTime_All(4,:)),3))]);
+legend([LS_A,SSA_A,Diff_A,Eq_A],{['Lattice Search: ', num2str(round(mean(SimTime_All(1,:)),3)), 's'],['SSA: ', num2str(round(mean(SimTime_All(2,:)),3)), 's'],['Diffusion: ', num2str(round(mean(SimTime_All(3,:)),3)), 's'],['Equilirbrium: ', num2str(round(mean(SimTime_All(4,:)),3)), 's']});
+
+TotalTimer = toc(Total_Start)
