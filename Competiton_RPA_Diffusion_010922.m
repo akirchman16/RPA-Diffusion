@@ -17,8 +17,8 @@ RAD51 = 51;     %how RAD51 will be represented on the lattice
 n_RAD51 = 3;    %size of RAD51 protein
 TotalCount_RAD51 = 300; %number of total RAD51 proteins (monomers)
 w_RAD51 = 1;    %cooperativity constant for RAD51
-k_on_RAD51 = 1; %kinetic rate constant for RAD51 binding
-k_off_RAD51 = 1;    %kinetic rate constant for RAD51 unbinding
+k_on_RAD51 = 0.1; %kinetic rate constant for RAD51 binding
+k_off_RAD51 = 10;    %kinetic rate constant for RAD51 unbinding
 
 %RPA Properties/Parameters
 RPA_A = 1; %represent RPA-A on lattice
@@ -26,15 +26,15 @@ RPA_D = 3;  %represent RPA-D on lattice
 n_A = 10;   %size of RPA-A
 n_D = 10;   %size of RPA-D
 n_RPA = n_A+n_D;
-TotalCount_RPA = 40;    %total number of RPA proteins that exist
+TotalCount_RPA = 50;    %total number of RPA proteins that exist
 w_RPA = 1;  %cooperativity of RPA (IDK if this is fully included in the model currently)
 k_on_RPA_A = 100;    %kinetic rate constant for RPA-A binding
-k_off_RPA_A = 1;    %kinetic rate constant for RPA-A unbinding
-k_on_RPA_D = 60;    %kinetic rate consant for RPA-D binding
+k_off_RPA_A = 5;    %kinetic rate constant for RPA-A unbinding
+k_on_RPA_D = 30;    %kinetic rate consant for RPA-D binding
 k_off_RPA_D = 10;    %kinetic rate constant for RPA-D unbinding
 
-DiffusionRate = 10000;    %RPA Diffusion Rate constant (events/time interval)
-Left_Prob = 0.5;    %probability of left diffusion, when both are possible (value between 0 and 1)
+DiffusionRate = 100000;    %RPA Diffusion Rate constant (events/time interval)
+Left_Prob = 0.1;    %probability of left diffusion, when both are possible (value between 0 and 1)
 Right_Prob = 1-Left_Prob;
 
 %Memory Allocation
@@ -784,35 +784,48 @@ while Equilibrium ~= 1
     SimTime_Event(Event) = toc(SimTime_Event_Start);
 end
 
+EqValue_RAD51 = mean(FracCover_RAD51(end-round(0.25*(Event+1)):end));  %Saturation levels at Equilibrium for all proteins and the total
+EqValue_RPA = mean(FracCover_RPA(end-round(0.25*(Event+1)):end));
+EqValue_RPA_A = mean(FracCover_RPA_A(end-round(0.25*(Event+1)):end));
+EqValue_RPA_D = mean(FracCover_RPA_D(end-round(0.25*(Event+1)):end));
+EqValue_Total = mean(FracCover_Total(end-round(0.25*(Event+1)):end));
+
+LeftDiffError = (abs((TotalLeftDiff/TotalDiffEvents)-Left_Prob)/Left_Prob)*100;   %Percent Error of Left Diffusion events
+RightDiffError = (abs((TotalRightDiff/TotalDiffEvents)-Right_Prob)/Right_Prob)*100;   %Percent Error of Right Diffusion events
+TotalDiffError = (abs(TotalDiffEvents-(DiffusionRate*t(end)))/(DiffusionRate*t(end)))*100;  %Percent Error of Total Diffusion Events
+% disp(['Diff. % Error: ', num2str(round(TotalDiffError,1)), '%']);
+% disp(['Left % Error: ', num2str(round(LeftDiffError,1)), '%']);
+% disp(['Right % Error: ', num2str(round(RightDiffError,1)), '%']);
+
 Max_RAD51_Sat = (Free_Proteins(1,1)*n_RAD51)/N; %maximum saturation for RAD51
 Max_RPA_A_Sat = (Free_Proteins(3,1)*n_A)/N; %maximum saturation for RPA-A
 Max_RPA_D_Sat = (Free_Proteins(3,1)*n_D)/N; %maximum saturation for RPA-D
 Max_RPA_Sat = (Free_Proteins(3,1)*n_RPA)/N; %maximum saturation for RPA
 Max_Sat = ((Free_Proteins(1,1)*n_RAD51)+(Free_Proteins(3,1)*n_RPA))/N;   %maximum total saturation
 
-figure(1);  %Saturation Plot
-% subplot(2,1,1);
+figure();  %Saturation Plot
 P_RAD51 = scatter(t,FracCover_RAD51,1,'red','filled'); hold on; yline(Max_RAD51_Sat,'--red');
 P_RPA_A = scatter(t,FracCover_RPA_A,1,'cyan','filled'); %yline(Max_RPA_A_Sat,'--cyan');
 P_RPA_D = scatter(t,FracCover_RPA_D,1,'blue','filled'); %yline(Max_RPA_D_Sat,'--blue');
 P_RPA = scatter(t,FracCover_RPA,1,'magenta','filled');  yline(Max_RPA_Sat,'--magenta');
 P_Total = scatter(t,FracCover_Total,1,'k','filled');    yline(Max_Sat,'--k');
+yline(EqValue_RAD51,'-r',['Eq: ', num2str(round(EqValue_RAD51,2))],'LabelHorizontalAlignment','left'); yline(EqValue_RPA,'-m',['Eq: ', num2str(round(EqValue_RPA,2))],'LabelHorizontalAlignment','left'); yline(EqValue_Total,'-k',['Eq: ', num2str(round(EqValue_Total,2))],'LabelHorizontalAlignment','left');
+% yline(EqValue_RPA_A,'-c',['Eq: ', num2str(round(EqValue_RPA_A,2))],'LabelHorizontalAlignment','left'); yline(EqValue_RPA_D,'-b',['Eq: ', num2str(round(EqValue_RPA_D,2))],'LabelHorizontalAlignment','left');
 xlabel('Time, t'); xlim([0 max(t)]);
 ylabel('Saturation'); ylim([0 1]);
 title('RAD51/RPA Competition Saturation');
 legend([P_RAD51,P_RPA_A,P_RPA_D,P_RPA,P_Total],'RAD51','RPA-A','RPA-D','All RPA','Total','location','southoutside','orientation','horizontal');
 box on;
 
-% figure(1);    %Free Protein Count Plot
-% subplot(2,1,2);
-% P_FreeRAD51_M = scatter(t,Free_Proteins(1,:),1,'r','filled');   hold on;
-% P_FreeRAD51_D = scatter(t,Free_Proteins(2,:),1,'b','filled');
-% P_Free_RPA = scatter(t,Free_Proteins(3,:),1,'g','filled');
-% xlabel('Time, t'); xlim([0 max(t)]);
-% ylabel('Population');   ylim([0 max(max(Free_Proteins))]);
-% legend([P_FreeRAD51_M,P_FreeRAD51_D,P_Free_RPA],'RAD51 Mon.','RAD51 Dim.','RPA');
-% title('Free Protein Populations');
-% box on;
+figure();    %Free Protein Count Plot
+P_FreeRAD51_M = scatter(t,Free_Proteins(1,:),1,'r','filled');   hold on;
+P_FreeRAD51_D = scatter(t,Free_Proteins(2,:),1,'b','filled');
+P_Free_RPA = scatter(t,Free_Proteins(3,:),1,'g','filled');
+xlabel('Time, t'); xlim([0 max(t)]);
+ylabel('Population');   ylim([0 max(max(Free_Proteins))]);
+legend([P_FreeRAD51_M,P_FreeRAD51_D,P_Free_RPA],'RAD51 Mon.','RAD51 Dim.','RPA');
+title('Free Protein Populations');
+box on;
 
 Graph_DNA(Graph_DNA == RPA_A) = 2;  %Locations where RPA-A is bound (cyan)
 Graph_DNA(Graph_DNA == 0) = 1;      %Empty locations on DNA lattice (white)
@@ -821,9 +834,9 @@ Graph_DNA(Graph_DNA == RAD51) = 4;  %Locations where RAD51 is bound (red)
 
 [X_DNA,Y_Time] = meshgrid(1:N,t);
 CustMap = [1, 1, 1; 0, 1, 1; 0, 0, 1; 1, 0, 0];  %custom color range for corresponding proteins (colors labeled above)
-colormap(figure(2),CustMap);
+colormap(figure(3),CustMap);
 
-figure(2);  %shows proteins moving over time
+figure(3);  %shows proteins moving over time
 surf(X_DNA,Y_Time,Graph_DNA,'EdgeColor','none');
 set(gca,'Ydir','reverse');  %reverses time axis so beginning is top of figure
 view(2);
@@ -837,7 +850,7 @@ title('RPA Diffusion');
 Bar = colorbar('location','eastoutside','Ticks',[1.375,2.125,2.875,3.625],'TickLabels',{'Empty','RPA-A','RPA-D','RAD51'});
 Bar.TickLength = 0;
 
-% fig3 = figure(3);
+% fig3 = figure();
 % box on;
 % left_color = [1,0,0];   %RAD51 color (red)
 % right_color = [1,0,1];    %RPA color (magenta)
