@@ -7,7 +7,7 @@ Total_Start = tic;
 % will have the possibility to diffuse along the lattice if they're able
 % to. This will be set by DiffusionRate.
 
-N = 1000;   %ssDNA length
+N = 2000;   %ssDNA length
 DNA = zeros(2,N);   %represents ssDNA lattice (2nd row is real lattice)
 
 minIterations = 100;
