@@ -33,7 +33,7 @@ k_off_RPA_A = 5;    %kinetic rate constant for RPA-A unbinding
 k_on_RPA_D = 30;    %kinetic rate consant for RPA-D binding
 k_off_RPA_D = 10;    %kinetic rate constant for RPA-D unbinding
 
-DiffusionRate = 10^10;    %RPA Diffusion Rate constant (events/time interval)
+DiffusionRate = 100000;    %RPA Diffusion Rate constant (events/time interval)
 Left_Prob = 0.5;    %probability of left diffusion, when both are possible (value between 0 and 1)
 Right_Prob = 1-Left_Prob;
 
@@ -406,9 +406,9 @@ while Equilibrium ~= 1
     DiffusionCountCheck = round(DiffusionRate*dt(Event));
     LeftDiffCounter = 0;    %counts number of left diffusion events
     RightDiffCounter = 0;   %number of right diffusion events
-    while DiffusionEvents <= DiffusionCountCheck & (CheckCount+1) <= numel(DiffusionOrder)    %checks for diffusion at each protein until all have ben checked or the right amount of events have occured
+    while (DiffusionCountCheck ~= 0) | (DiffusionEvents < DiffusionCountCheck) | ((numel(find(DNA(1,:) == RPA_A | DNA(1,:) == RPA_D)) ~= 0) & (~isempty(find((abs(diff([25 DNA(2,1:N-n_D)])) == RPA_A) | abs(diff([25 DNA(2,1:N-n_D)])) == RPA_D)))) %checks for diffusion at each protein until all have ben checked or the right amount of events have occured
         CheckCount = CheckCount+1;
-        RPA_Check = DiffusionOrder(CheckCount); %random protein to be checked
+        RPA_Check = DiffusionOrder(randi(numel(DiffusionOrder))); %random protein to be checked
         if (DNA(2,RPA_Check) == RPA_A)    %if the selected protein is RPA-A...
             if DNA(2,RPA_Check+n_A) == RPA_D   %if RPA-D is hinged closed...
                 if RPA_Check == 1   %if left-most edge is selected (right diffusion only)
@@ -419,7 +419,7 @@ while Equilibrium ~= 1
                         DNA(2,RPA_Check+1+n_A:RPA_Check+1+n_A+(n_D-1)) = RPA_D; %diffuses RPA-D segment to the right as well
                         DiffusionEvents = DiffusionEvents+1;    %advances diffusion event counter
                         RightDiffCounter = RightDiffCounter+1;  %advances right diffusion event counter
-                        DiffusionOrder((DiffusionOrder-RPA_Check < n_RPA) & (DiffusionOrder-RPA_Check > 0)) = [];  %clears corresponding part of same RPA protein
+                        DiffusionOrder((DiffusionOrder-RPA_Check < n_RPA) & (DiffusionOrder-RPA_Check >= 0)) = DiffusionOrder((DiffusionOrder-RPA_Check < n_RPA) & (DiffusionOrder-RPA_Check >= 0))+1;  %updates locations of all parts of RPA attached to this one
                         RPA_A_BoundAtSpot(RPA_Check:RPA_Check+1) = [0,1];   %updates RPA_A_BoundAtSpot
                         RPA_D_BoundAtSpot(RPA_Check+n_A:RPA_Check+n_A+1) = [0,1];   %updates RPA_D_BoundAtSpot
                     end
@@ -431,7 +431,7 @@ while Equilibrium ~= 1
                         DNA(2,(RPA_Check-1)+n_A:(RPA_Check-1)+n_A+(n_D-1)) = RPA_D; %diffuses RPA-D segment along with it
                         DiffusionEvents = DiffusionEvents+1;    %counts number of diffusion events
                         LeftDiffCounter = LeftDiffCounter+1;    %counts number of left diffusion events
-                        DiffusionOrder((DiffusionOrder-RPA_Check < n_RPA) & (DiffusionOrder-RPA_Check > 0)) = [];  %clears corresponding part of same RPA protein
+                        DiffusionOrder((RPA_Check-DiffusionOrder < n_RPA) & (RPA_Check-DiffusionOrder >= 0)) = DiffusionOrder((RPA_Check-DiffusionOrder < n_RPA) & (RPA_Check-DiffusionOrder >= 0))-1;  %updates location of attached RPA proteins
                         RPA_A_BoundAtSpot(RPA_Check-1:RPA_Check) = [1,0];   %updates RPA_A_BoundAtSpot
                         RPA_D_BoundAtSpot(RPA_Check+n_A-1:RPA_Check+n_A) = [1,0];   %updates RPA_D_BoundAtSpot
                     end
@@ -442,7 +442,7 @@ while Equilibrium ~= 1
                     DNA(2,(RPA_Check-1)+n_A:(RPA_Check-1)+n_A+(n_D-1)) = RPA_D; %diffuses RPA-D segment along with it
                     DiffusionEvents = DiffusionEvents+1;    %counts number of diffusion events
                     LeftDiffCounter = LeftDiffCounter+1;    %counts number of left diffusion events
-                    DiffusionOrder((DiffusionOrder-RPA_Check < n_RPA) & (DiffusionOrder-RPA_Check > 0)) = [];  %clears corresponding part of same RPA protein
+                    DiffusionOrder((RPA_Check-DiffusionOrder < n_RPA) & (RPA_Check-DiffusionOrder >= 0)) = DiffusionOrder((RPA_Check-DiffusionOrder < n_RPA) & (RPA_Check-DiffusionOrder >= 0))-1;  %updates location of attached RPA proteins
                     RPA_A_BoundAtSpot(RPA_Check-1:RPA_Check) = [1,0];   %updates RPA_A_BoundAtSpot
                     RPA_D_BoundAtSpot(RPA_Check+n_A-1:RPA_Check+n_A) = [1,0];   %updates RPA_D_BoundAtSpot
                 elseif ((DNA(2,RPA_Check-1) ~= 0) && (DNA(2,RPA_Check+n_RPA) == 0))  %if protein can only diffuse to the right
@@ -452,7 +452,7 @@ while Equilibrium ~= 1
                     DNA(2,RPA_Check+1+n_A:RPA_Check+1+n_A+(n_D-1)) = RPA_D; %diffuses RPA-D segment to the right as well
                     DiffusionEvents = DiffusionEvents+1;    %advances diffusion event counter
                     RightDiffCounter = RightDiffCounter+1;  %advances right diffusion event counter
-                    DiffusionOrder((DiffusionOrder-RPA_Check < n_RPA) & (DiffusionOrder-RPA_Check > 0)) = [];  %clears corresponding part of same RPA protein
+                    DiffusionOrder((DiffusionOrder-RPA_Check < n_RPA) & (DiffusionOrder-RPA_Check >= 0)) = DiffusionOrder((DiffusionOrder-RPA_Check < n_RPA) & (DiffusionOrder-RPA_Check >= 0))+1;  %updates locations of all parts of RPA attached to this one
                     RPA_A_BoundAtSpot(RPA_Check:RPA_Check+1) = [0,1];   %updates RPA_A_BoundAtSpot
                     RPA_D_BoundAtSpot(RPA_Check+n_A:RPA_Check+n_A+1) = [0,1];   %updates RPA_D_BoundAtSpot
                 elseif ((DNA(2,RPA_Check-1) == 0) && (DNA(2,RPA_Check+n_RPA) == 0))    %otherwise it can diffuse in either direction
@@ -464,7 +464,7 @@ while Equilibrium ~= 1
                         DNA(2,(RPA_Check-1)+n_A:(RPA_Check-1)+n_A+(n_D-1)) = RPA_D; %diffuses RPA-D segment along with it
                         DiffusionEvents = DiffusionEvents+1;    %counts number of diffusion events
                         LeftDiffCounter = LeftDiffCounter+1;    %counts number of left diffusion events
-                        DiffusionOrder((DiffusionOrder-RPA_Check < n_RPA) & (DiffusionOrder-RPA_Check > 0)) = [];  %clears corresponding part of same RPA protein
+                        DiffusionOrder((RPA_Check-DiffusionOrder < n_RPA) & (RPA_Check-DiffusionOrder >= 0)) = DiffusionOrder((RPA_Check-DiffusionOrder < n_RPA) & (RPA_Check-DiffusionOrder >= 0))-1;  %updates location of attached RPA proteins
                         RPA_A_BoundAtSpot(RPA_Check-1:RPA_Check) = [1,0];   %updates RPA_A_BoundAtSpot
                         RPA_D_BoundAtSpot(RPA_Check+n_A-1:RPA_Check+n_A) = [1,0];   %updates RPA_D_BoundAtSpot
                     else
@@ -474,7 +474,7 @@ while Equilibrium ~= 1
                         DNA(2,RPA_Check+1+n_A:RPA_Check+1+n_A+(n_D-1)) = RPA_D; %diffuses RPA-D segment to the right as well
                         DiffusionEvents = DiffusionEvents+1;    %advances diffusion event counter
                         RightDiffCounter = RightDiffCounter+1;  %advances right diffusion event counter
-                        DiffusionOrder((DiffusionOrder-RPA_Check < n_RPA) & (DiffusionOrder-RPA_Check > 0)) = [];  %clears corresponding part of same RPA protein
+                        DiffusionOrder((DiffusionOrder-RPA_Check < n_RPA) & (DiffusionOrder-RPA_Check >= 0)) = DiffusionOrder((DiffusionOrder-RPA_Check < n_RPA) & (DiffusionOrder-RPA_Check >= 0))+1;  %updates locations of all parts of RPA attached to this one
                         RPA_A_BoundAtSpot(RPA_Check:RPA_Check+1) = [0,1];   %updates RPA_A_BoundAtSpot
                         RPA_D_BoundAtSpot(RPA_Check+n_A:RPA_Check+n_A+1) = [0,1];   %updates RPA_D_BoundAtSpot
                     end
@@ -489,7 +489,7 @@ while Equilibrium ~= 1
                         DNA(1,RPA_Check+n_A+1:RPA_Check+1+(n_RPA-1)) = RPA_D;   %diffuses hinged RPA-D to the right
                         DiffusionEvents = DiffusionEvents+1;    %updates counters
                         RightDiffCounter = RightDiffCounter+1;
-                        DiffusionOrder((DiffusionOrder-RPA_Check < n_RPA) & (DiffusionOrder-RPA_Check > 0)) = [];  %clears corresponding part of same RPA protein
+                        DiffusionOrder((DiffusionOrder-RPA_Check < n_RPA) & (DiffusionOrder-RPA_Check >= 0)) = DiffusionOrder((DiffusionOrder-RPA_Check < n_RPA) & (DiffusionOrder-RPA_Check >= 0))+1;  %updates locations of all parts of RPA attached to this one
                         RPA_A_BoundAtSpot(RPA_Check:RPA_Check+1) = [0,1];   %updates RPA_BoundAtSpot
                         RPA_D_HingedOpen(RPA_Check+n_A:RPA_Check+n_A+1) = [0,1];    %updates RPA_D_HingedOpen
                     end
@@ -502,7 +502,7 @@ while Equilibrium ~= 1
                         DNA(1,(RPA_Check+n_A)-1:(RPA_Check-1)+(n_RPA-1)) = RPA_D;   %diffurses RPA-D to the left
                         DiffusionEvents = DiffusionEvents+1;    %updates counters
                         LeftDiffCounter = LeftDiffCounter+1;
-                        DiffusionOrder((DiffusionOrder-RPA_Check < n_RPA) & (DiffusionOrder-RPA_Check > 0)) = [];  %clears corresponding part of same RPA protein
+                        DiffusionOrder((RPA_Check-DiffusionOrder < n_RPA) & (RPA_Check-DiffusionOrder >= 0)) = DiffusionOrder((RPA_Check-DiffusionOrder < n_RPA) & (RPA_Check-DiffusionOrder >= 0))-1;  %updates location of attached RPA proteins
                         RPA_A_BoundAtSpot(RPA_Check-1:RPA_Check) = [1,0];   %updates RPA_A_BoundAtSpot
                         RPA_D_HingedOpen(RPA_Check+n_A-1:RPA_Check+n_A) = [1,0];   %updates RPA_D_BoundAtSpot
                     end
@@ -514,7 +514,7 @@ while Equilibrium ~= 1
                     DNA(1,RPA_Check+n_A-1:(RPA_Check-1)+(n_RPA-1)) = RPA_D;   %diffurses RPA-D to the left
                     DiffusionEvents = DiffusionEvents+1;    %updates counters
                     LeftDiffCounter = LeftDiffCounter+1;
-                    DiffusionOrder((DiffusionOrder-RPA_Check < n_RPA) & (DiffusionOrder-RPA_Check > 0)) = [];  %clears corresponding part of same RPA protein
+                    DiffusionOrder((RPA_Check-DiffusionOrder < n_RPA) & (RPA_Check-DiffusionOrder >= 0)) = DiffusionOrder((RPA_Check-DiffusionOrder < n_RPA) & (RPA_Check-DiffusionOrder >= 0))-1;  %updates location of attached RPA proteins
                     RPA_A_BoundAtSpot(RPA_Check-1:RPA_Check) = [1,0];   %updates RPA_A_BoundAtSpot
                     RPA_D_HingedOpen(RPA_Check+n_A-1:RPA_Check+n_A) = [1,0];   %updates RPA_D_BoundAtSpot
                 elseif (((DNA(2,RPA_Check-1) ~= 0) || (DNA(1,(RPA_Check-1)+n_A) ~= 0)) && (DNA(2,RPA_Check+n_A) == 0)) && (DNA(1,RPA_Check+n_RPA) == 0)  %if diffusion is only possible to the right
@@ -525,7 +525,7 @@ while Equilibrium ~= 1
                     DNA(1,RPA_Check+n_A+1:RPA_Check+1+(n_RPA-1)) = RPA_D;   %diffuses hinged RPA-D to the right
                     DiffusionEvents = DiffusionEvents+1;    %updates counters
                     RightDiffCounter = RightDiffCounter+1;
-                    DiffusionOrder((DiffusionOrder-RPA_Check < n_RPA) & (DiffusionOrder-RPA_Check > 0)) = [];  %clears corresponding part of same RPA protein
+                    DiffusionOrder((DiffusionOrder-RPA_Check < n_RPA) & (DiffusionOrder-RPA_Check >= 0)) = DiffusionOrder((DiffusionOrder-RPA_Check < n_RPA) & (DiffusionOrder-RPA_Check >= 0))+1;  %updates locations of all parts of RPA attached to this one
                     RPA_A_BoundAtSpot(RPA_Check:RPA_Check+1) = [0,1];   %updates RPA_BoundAtSpot
                     RPA_D_HingedOpen(RPA_Check+n_A:RPA_Check+n_A+1) = [0,1];    %updates RPA_D_HingedOpen
                 elseif ((DNA(2,RPA_Check-1) == 0) && (DNA(2,RPA_Check+n_A) == 0)) && ((DNA(1,(RPA_Check-1)+n_A) == 0) && (DNA(1,RPA_Check+n_RPA) == 0))  %otherwise diffusion is possible in either direction
@@ -538,7 +538,7 @@ while Equilibrium ~= 1
                         DNA(1,RPA_Check+n_A-1:(RPA_Check-1)+(n_RPA-1)) = RPA_D;   %diffurses RPA-D to the left
                         DiffusionEvents = DiffusionEvents+1;    %updates counters
                         LeftDiffCounter = LeftDiffCounter+1;
-                        DiffusionOrder((DiffusionOrder-RPA_Check < n_RPA) & (DiffusionOrder-RPA_Check > 0)) = [];  %clears corresponding part of same RPA protein
+                        DiffusionOrder((RPA_Check-DiffusionOrder < n_RPA) & (RPA_Check-DiffusionOrder >= 0)) = DiffusionOrder((RPA_Check-DiffusionOrder < n_RPA) & (RPA_Check-DiffusionOrder >= 0))-1;  %updates location of attached RPA proteins
                         RPA_A_BoundAtSpot(RPA_Check-1:RPA_Check) = [1,0];   %updates RPA_A_BoundAtSpot
                         RPA_D_HingedOpen(RPA_Check+n_A-1:RPA_Check+n_A) = [1,0];   %updates RPA_D_BoundAtSpot
                     else   %otherwise diffuse to the right
@@ -549,7 +549,7 @@ while Equilibrium ~= 1
                         DNA(1,RPA_Check+n_A+1:RPA_Check+1+(n_RPA-1)) = RPA_D;   %diffuses hinged RPA-D to the right
                         DiffusionEvents = DiffusionEvents+1;    %updates counters
                         RightDiffCounter = RightDiffCounter+1;
-                        DiffusionOrder((DiffusionOrder-RPA_Check < n_RPA) & (DiffusionOrder-RPA_Check > 0)) = [];  %clears corresponding part of same RPA protein
+                        DiffusionOrder((DiffusionOrder-RPA_Check < n_RPA) & (DiffusionOrder-RPA_Check >= 0)) = DiffusionOrder((DiffusionOrder-RPA_Check < n_RPA) & (DiffusionOrder-RPA_Check >= 0))+1;  %updates locations of all parts of RPA attached to this one
                         RPA_A_BoundAtSpot(RPA_Check:RPA_Check+1) = [0,1];   %updates RPA_BoundAtSpot
                         RPA_D_HingedOpen(RPA_Check+n_A:RPA_Check+n_A+1) = [0,1];    %updates RPA_D_HingedOpen
                     end     
@@ -565,7 +565,7 @@ while Equilibrium ~= 1
                         DNA(2,RPA_Check+1:RPA_Check+1+(n_D-1)) = RPA_D; %diffuses RPA-D
                         DiffusionEvents = DiffusionEvents+1;    %updates counters
                         RightDiffCounter = RightDiffCounter+1;
-                        DiffusionOrder((RPA_Check-DiffusionOrder < n_RPA) & (RPA_Check-DiffusionOrder > 0)) = [];  %clears corresponding part of same RPA protein
+                        DiffusionOrder((RPA_Check-DiffusionOrder < n_RPA) & (RPA_Check-DiffusionOrder >= 0)) = DiffusionOrder((RPA_Check-DiffusionOrder < n_RPA) & (RPA_Check-DiffusionOrder >= 0))+1;  %updates locations of all parts of RPA attached to this one
                         RPA_A_BoundAtSpot(RPA_Check-n_A:RPA_Check-n_A+1) = [0,1];
                         RPA_D_BoundAtSpot(RPA_Check:RPA_Check+1) = [0,1];
                     end
@@ -577,7 +577,7 @@ while Equilibrium ~= 1
                         DNA(2,RPA_Check-1:RPA_Check-1+(n_D-1)) = RPA_D; %diffuses RPA-D
                         DiffusionEvents = DiffusionEvents+1;    %updates counters
                         LeftDiffCounter = LeftDiffCounter+1;
-                        DiffusionOrder((RPA_Check-DiffusionOrder < n_RPA) & (RPA_Check-DiffusionOrder > 0)) = [];  %clears corresponding part of same RPA protein
+                        DiffusionOrder((RPA_Check-DiffusionOrder < n_RPA) & (RPA_Check-DiffusionOrder >= 0)) = DiffusionOrder((RPA_Check-DiffusionOrder < n_RPA) & (RPA_Check-DiffusionOrder >= 0))-1;  %updates location of attached RPA proteins
                         RPA_A_BoundAtSpot(RPA_Check-n_A-1:RPA_Check-n_A) = [1,0];
                         RPA_D_BoundAtSpot(RPA_Check-1:RPA_Check) = [1,0];
                     end
@@ -588,7 +588,7 @@ while Equilibrium ~= 1
                     DNA(2,RPA_Check-1:RPA_Check-1+(n_D-1)) = RPA_D; %diffuses RPA-D
                     DiffusionEvents = DiffusionEvents+1;    %updates counters
                     LeftDiffCounter = LeftDiffCounter+1;
-                    DiffusionOrder((RPA_Check-DiffusionOrder < n_RPA) & (RPA_Check-DiffusionOrder > 0)) = [];  %clears corresponding part of same RPA protein
+                    DiffusionOrder((RPA_Check-DiffusionOrder < n_RPA) & (RPA_Check-DiffusionOrder >= 0)) = DiffusionOrder((RPA_Check-DiffusionOrder < n_RPA) & (RPA_Check-DiffusionOrder >= 0))-1;  %updates location of attached RPA proteins
                     RPA_A_BoundAtSpot(RPA_Check-n_A-1:RPA_Check-n_A) = [1,0];
                     RPA_D_BoundAtSpot(RPA_Check-1:RPA_Check) = [1,0];
                 elseif (DNA(2,RPA_Check-(n_A+1)) ~= 0) && (DNA(2,RPA_Check+n_D) == 0) %if protein can only diffuse to the right
@@ -598,7 +598,7 @@ while Equilibrium ~= 1
                     DNA(2,RPA_Check+1:RPA_Check+1+(n_D-1)) = RPA_D; %diffuses RPA-D
                     DiffusionEvents = DiffusionEvents+1;    %updates counters
                     RightDiffCounter = RightDiffCounter+1;
-                    DiffusionOrder((RPA_Check-DiffusionOrder < n_RPA) & (RPA_Check-DiffusionOrder > 0)) = [];  %clears corresponding part of same RPA protein
+                    DiffusionOrder((RPA_Check-DiffusionOrder < n_RPA) & (RPA_Check-DiffusionOrder >= 0)) = DiffusionOrder((RPA_Check-DiffusionOrder < n_RPA) & (RPA_Check-DiffusionOrder >= 0))+1;  %updates locations of all parts of RPA attached to this one
                     RPA_A_BoundAtSpot(RPA_Check-n_A:RPA_Check-n_A+1) = [0,1];
                     RPA_D_BoundAtSpot(RPA_Check:RPA_Check+1) = [0,1];
                 elseif (DNA(2,RPA_Check-(n_A+1)) == 0) && (DNA(2,RPA_Check+n_D) == 0)    %otherwise it can diffuse in either direction
@@ -610,7 +610,7 @@ while Equilibrium ~= 1
                         DNA(2,RPA_Check-1:RPA_Check-1+(n_D-1)) = RPA_D; %diffuses RPA-D
                         DiffusionEvents = DiffusionEvents+1;    %updates counters
                         LeftDiffCounter = LeftDiffCounter+1;
-                        DiffusionOrder((RPA_Check-DiffusionOrder < n_RPA) & (RPA_Check-DiffusionOrder > 0)) = [];  %clears corresponding part of same RPA protein
+                        DiffusionOrder((RPA_Check-DiffusionOrder < n_RPA) & (RPA_Check-DiffusionOrder >= 0)) = DiffusionOrder((RPA_Check-DiffusionOrder < n_RPA) & (RPA_Check-DiffusionOrder >= 0))-1;  %updates location of attached RPA proteins
                         RPA_A_BoundAtSpot(RPA_Check-n_A-1:RPA_Check-n_A) = [1,0];
                         RPA_D_BoundAtSpot(RPA_Check-1:RPA_Check) = [1,0];
                     else
@@ -620,7 +620,7 @@ while Equilibrium ~= 1
                         DNA(2,RPA_Check+1:RPA_Check+1+(n_D-1)) = RPA_D; %diffuses RPA-D
                         DiffusionEvents = DiffusionEvents+1;    %updates counters
                         RightDiffCounter = RightDiffCounter+1;
-                        DiffusionOrder((RPA_Check-DiffusionOrder < n_RPA) & (RPA_Check-DiffusionOrder > 0)) = [];  %clears corresponding part of same RPA protein
+                        DiffusionOrder((RPA_Check-DiffusionOrder < n_RPA) & (RPA_Check-DiffusionOrder >= 0)) = DiffusionOrder((RPA_Check-DiffusionOrder < n_RPA) & (RPA_Check-DiffusionOrder >= 0))+1;  %updates locations of all parts of RPA attached to this one
                         RPA_A_BoundAtSpot(RPA_Check-n_A:RPA_Check-n_A+1) = [0,1];
                         RPA_D_BoundAtSpot(RPA_Check:RPA_Check+1) = [0,1];
                     end
@@ -635,7 +635,7 @@ while Equilibrium ~= 1
                         DNA(2,RPA_Check+1:RPA_Check+1+(n_D-1)) = RPA_D; %diffuse RPA-D
                         DiffusionEvents = DiffusionEvents+1;    %update counters
                         RightDiffCounter = RightDiffCounter+1;
-                        DiffusionOrder(((RPA_Check - DiffusionOrder) <= n_A) & (RPA_Check-DiffusionOrder) > 0) = [];    %clears any other part of the protein that is going to be diffused in future step
+                        DiffusionOrder((RPA_Check-DiffusionOrder < n_RPA) & (RPA_Check-DiffusionOrder >= 0)) = DiffusionOrder((RPA_Check-DiffusionOrder < n_RPA) & (RPA_Check-DiffusionOrder >= 0))+1;  %updates locations of all parts of RPA attached to this one
                         RPA_A_HingedOpen(RPA_Check-(n_A):RPA_Check+1-(n_A)) = [0,1];    %updtae location trackers
                         RPA_D_BoundAtSpot(RPA_Check:RPA_Check+1) = [0,1];
                     end
@@ -648,7 +648,7 @@ while Equilibrium ~= 1
                         DNA(2,RPA_Check-1:(RPA_Check-1)+(n_D-1)) = RPA_D;   %diffuse RPA-D
                         DiffusionEvents = DiffusionEvents+1;    %update counters
                         LeftDiffCounter = LeftDiffCounter+1;
-                        DiffusionOrder(((RPA_Check-DiffusionOrder) <= n_A) & (RPA_Check-DiffusionOrder)>0) = [];    %clears any location that is part of this same protein
+                        DiffusionOrder((RPA_Check-DiffusionOrder < n_RPA) & (RPA_Check-DiffusionOrder >= 0)) = DiffusionOrder((RPA_Check-DiffusionOrder < n_RPA) & (RPA_Check-DiffusionOrder >= 0))-1;  %updates location of attached RPA proteins
                         RPA_A_HingedOpen((RPA_Check-1)-(n_A-1)-1:(RPA_Check-1)-(n_A-1)) = [1,0];    %updates location trakcers
                         RPA_D_BoundAtSpot(RPA_Check-1:RPA_Check) = [1,0];
                     end
@@ -660,7 +660,7 @@ while Equilibrium ~= 1
                     DNA(2,RPA_Check-1:(RPA_Check-1)+(n_D-1)) = RPA_D;   %diffuse RPA-D
                     DiffusionEvents = DiffusionEvents+1;    %update counters
                     LeftDiffCounter = LeftDiffCounter+1;
-                    DiffusionOrder(((RPA_Check-DiffusionOrder) <= n_A) & (RPA_Check-DiffusionOrder)>0) = [];    %clears any location that is part of this same protein
+                    DiffusionOrder((RPA_Check-DiffusionOrder < n_RPA) & (RPA_Check-DiffusionOrder >= 0)) = DiffusionOrder((RPA_Check-DiffusionOrder < n_RPA) & (RPA_Check-DiffusionOrder >= 0))-1;  %updates location of attached RPA proteins
                     RPA_A_HingedOpen((RPA_Check-1)-(n_A-1)-1:(RPA_Check-1)-(n_A-1)) = [1,0];    %updates location trakcers
                     RPA_D_BoundAtSpot(RPA_Check-1:RPA_Check) = [1,0];
                 elseif ((DNA(1,(RPA_Check) == 0) & DNA(2,RPA_Check+n_D) == 0)) & ((DNA(1,(RPA_Check-1)-n_A) ~= 0) | (DNA(2,RPA_Check-1) ~= 0)) %if protein can only diffuse to the right
@@ -671,7 +671,7 @@ while Equilibrium ~= 1
                     DNA(2,RPA_Check+1:RPA_Check+1+(n_D-1)) = RPA_D; %diffuse RPA-D
                     DiffusionEvents = DiffusionEvents+1;    %update counters
                     RightDiffCounter = RightDiffCounter+1;
-                    DiffusionOrder(((RPA_Check - DiffusionOrder) <= n_A) & (RPA_Check-DiffusionOrder) > 0) = [];    %clears any other part of the protein that is going to be diffused in future step
+                    DiffusionOrder((RPA_Check-DiffusionOrder < n_RPA) & (RPA_Check-DiffusionOrder >= 0)) = DiffusionOrder((RPA_Check-DiffusionOrder < n_RPA) & (RPA_Check-DiffusionOrder >= 0))+1;  %updates locations of all parts of RPA attached to this one
                     RPA_A_HingedOpen(RPA_Check-(n_A):RPA_Check+1-(n_A)) = [0,1];    %updtae location trackers
                     RPA_D_BoundAtSpot(RPA_Check:RPA_Check+1) = [0,1];
                 elseif (DNA(1,(RPA_Check-1)-n_A) == 0) && (DNA(1,RPA_Check) == 0) && (DNA(2,RPA_Check-1) == 0) && (DNA(2,RPA_Check+n_D) == 0)    %otherwise it can diffuse in either direction
@@ -684,7 +684,7 @@ while Equilibrium ~= 1
                         DNA(2,RPA_Check-1:(RPA_Check-1)+(n_D-1)) = RPA_D;   %diffuse RPA-D
                         DiffusionEvents = DiffusionEvents+1;    %update counters
                         LeftDiffCounter = LeftDiffCounter+1;
-                        DiffusionOrder(((RPA_Check-DiffusionOrder) <= n_A) & (RPA_Check-DiffusionOrder)>0) = [];    %clears any location that is part of this same protein
+                        DiffusionOrder((RPA_Check-DiffusionOrder < n_RPA) & (RPA_Check-DiffusionOrder >= 0)) = DiffusionOrder((RPA_Check-DiffusionOrder < n_RPA) & (RPA_Check-DiffusionOrder >=0))-1;  %updates location of attached RPA proteins
                         RPA_A_HingedOpen((RPA_Check-1)-(n_A-1)-1:(RPA_Check-1)-(n_A-1)) = [1,0];    %updates location trakcers
                         RPA_D_BoundAtSpot(RPA_Check-1:RPA_Check) = [1,0];
                     else
@@ -695,7 +695,7 @@ while Equilibrium ~= 1
                         DNA(2,RPA_Check+1:RPA_Check+1+(n_D-1)) = RPA_D; %diffuse RPA-D
                         DiffusionEvents = DiffusionEvents+1;    %update counters
                         RightDiffCounter = RightDiffCounter+1;
-                        DiffusionOrder(((RPA_Check - DiffusionOrder) <= n_A) & (RPA_Check-DiffusionOrder) > 0) = [];    %clears any other part of the protein that is going to be diffused in future step
+                        DiffusionOrder((RPA_Check-DiffusionOrder < n_RPA) & (RPA_Check-DiffusionOrder >= 0)) = DiffusionOrder((RPA_Check-DiffusionOrder < n_RPA) & (RPA_Check-DiffusionOrder >= 0))+1;  %updates locations of all parts of RPA attached to this one
                         RPA_A_HingedOpen(RPA_Check-(n_A):RPA_Check+1-(n_A)) = [0,1];    %updtae location trackers
                         RPA_D_BoundAtSpot(RPA_Check:RPA_Check+1) = [0,1];
                     end
