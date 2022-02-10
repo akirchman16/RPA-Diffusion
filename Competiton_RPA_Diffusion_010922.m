@@ -399,8 +399,7 @@ while Equilibrium ~= 1
         break;
     end
     
-    RPA_CurrentBound = sort([find(RPA_A_BoundAtSpot == 1),find(RPA_D_BoundAtSpot == 1)]);  %list of locations where RPA is bound
-    DiffusionOrder = RPA_CurrentBound(randperm(length(RPA_CurrentBound)));    %random order to check RPA proteins if they can diffuse
+    DiffusionOrder = sort([find(RPA_A_BoundAtSpot == 1),find(RPA_D_BoundAtSpot == 1)]);  %list of locations where RPA is bound
     DiffusionEvents = 0;    %resets Diffusion event counter
     CheckCount = 0; %number of diffusion events which have actually occured
     DiffusionCountCheck = round(DiffusionRate*dt(Event));
