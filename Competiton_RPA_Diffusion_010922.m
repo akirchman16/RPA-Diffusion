@@ -413,8 +413,8 @@ while Equilibrium ~= 1
         if (DNA(2,RPA_Check) == RPA_A)    %if the selected protein is RPA-A...
             if DNA(2,RPA_Check+n_A) == RPA_D   %if RPA-D is hinged closed...
                 if RPA_Check == 1   %if left-most edge is selected (right diffusion only)
-                    if DNA(2,RPA_Check+n_RPA) == 0  %if diffusion is possible
-%                         k(Event,CheckCount) = 1;
+                    if DNA(2,n_RPA+1) == 0  %if diffusion is possible
+                        % k(Event,CheckCount) = 1;
                         DNA(2,RPA_Check:RPA_Check+(n_RPA-1)) = 0;   %clears RPA protein from location
                         DNA(2,RPA_Check+1:RPA_Check+1+(n_A-1)) = RPA_A; %diffuses RPA-D segment to the right
                         DNA(2,RPA_Check+1+n_A:RPA_Check+1+n_A+(n_D-1)) = RPA_D; %diffuses RPA-D segment to the right as well
@@ -425,7 +425,7 @@ while Equilibrium ~= 1
                     end
                 elseif RPA_Check == N-(n_RPA-1) %if right-most possible position is selected (left diffusion only)
                     if DNA(2,RPA_Check-1) == 0
-%                         k(Event,CheckCount) = 2;
+                        % k(Event,CheckCount) = 2;
                         DNA(2,RPA_Check:RPA_Check+(n_RPA-1)) = 0;   %clears RPA protein from location
                         DNA(2,RPA_Check-1:(RPA_Check-1)+(n_A-1)) = RPA_A; %diffuses RPA-A segment to the left
                         DNA(2,(RPA_Check-1)+n_A:(RPA_Check-1)+n_A+(n_D-1)) = RPA_D; %diffuses RPA-D segment along with it
@@ -435,7 +435,7 @@ while Equilibrium ~= 1
                         RPA_D_BoundAtSpot(RPA_Check+n_A-1:RPA_Check+n_A) = [1,0];   %updates RPA_D_BoundAtSpot
                     end
                 elseif ((DNA(2,RPA_Check-1) == 0) && (DNA(2,RPA_Check+n_RPA) ~= 0)) %if protein can only diffuse to the left
-%                     k(Event,CheckCount) = 3;
+                    % k(Event,CheckCount) = 3;
                     DNA(2,RPA_Check:RPA_Check+(n_RPA-1)) = 0;   %clears RPA protein from location
                     DNA(2,RPA_Check-1:(RPA_Check-1)+(n_A-1)) = RPA_A; %diffuses RPA-A segment to the left
                     DNA(2,(RPA_Check-1)+n_A:(RPA_Check-1)+n_A+(n_D-1)) = RPA_D; %diffuses RPA-D segment along with it
