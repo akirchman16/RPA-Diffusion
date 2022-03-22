@@ -33,8 +33,8 @@ k_off_RPA_A = 5;    %kinetic rate constant for RPA-A unbinding
 k_on_RPA_D = 30;    %kinetic rate consant for RPA-D binding
 k_off_RPA_D = 10;    %kinetic rate constant for RPA-D unbinding
 
-DiffusionRate = 1e5;    %RPA Diffusion Rate constant (events/time interval)
-Left_Prob = 0.8;    %probability of left diffusion, when both are possible (value between 0 and 1)
+DiffusionRate = 1e+10;    %RPA Diffusion Rate constant (events/time interval)
+Left_Prob = 0.5;    %probability of left diffusion, when both are possible (value between 0 and 1)
 Right_Prob = 1-Left_Prob;
 
 %Memory Allocation
@@ -544,7 +544,7 @@ while Equilibrium ~= 1
                     end     
                 end
             end
-        else    %otherwise the selected protein is RPA-D    %...otherwise the selected protein is RPA-D
+        else    %otherwise the selected protein is RPA-D
             if DNA(2,RPA_Check-1) == RPA_A  %if RPA-A is hinged closed
                 if RPA_Check == n_A+1   %if left most possible position is selected (right diffusion only)
                     if DNA(2,RPA_Check+n_D) == 0    %if diffusion is possible
@@ -680,7 +680,7 @@ while Equilibrium ~= 1
                 end
             end
         end
-%         RPA_Check_Tracker(Event,CheckCount) = RPA_Check;    %records order of where RPA proteins were chosen to diffuse (use with k to track all diffusions)
+        %RPA_Check_Tracker(Event,CheckCount) = RPA_Check;    %records order of where RPA proteins were chosen to diffuse (use with k to track all diffusions)
         
         if round((numel(find(DNA(1,:) == RPA_A))/n_A)) ~= (numel(find(DNA(1,:) == RPA_A))/n_A)
             disp('BROKEN RPA-A (OPEN) - DIFFUSION');
