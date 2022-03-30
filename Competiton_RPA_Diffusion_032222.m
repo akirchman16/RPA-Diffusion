@@ -1,4 +1,4 @@
- clearvars;
+clearvars;
 close all;
 
 % This code will be a competition model between RPA and RAD51. It will run
@@ -33,7 +33,7 @@ k_off_RPA_A = 5;    %kinetic rate constant for RPA-A unbinding
 k_on_RPA_D = 30;    %kinetic rate consant for RPA-D binding
 k_off_RPA_D = 10;    %kinetic rate constant for RPA-D unbinding
 
-DiffusionRate = 1e+5;    %RPA Diffusion Rate constant (events/time interval)
+DiffusionRate = 1e+3;    %RPA Diffusion Rate constant (events/time interval)
 Left_Prob = 0.7;    %probability of left diffusion, when both are possible (value between 0 and 1)
 Right_Prob = 1-Left_Prob;
 
@@ -245,6 +245,9 @@ while Equilibrium ~= 1
 
     Randoms = [rand,rand];    %random numbers for Monte Carlo steps
     dt(Event) = (1/a_0(Event))*log(1/Randoms(1)); %time until next reaction occurs
+    
+    a = a_Prop(:,Event);
+    [dt,j(Event)] = SSA_Direct(a);
     
     if a_Prop(1,Event) >= Randoms(2)*a_0(Event)             %RAD51 Monomer Isolated Binding
         j(Event) = 1;
