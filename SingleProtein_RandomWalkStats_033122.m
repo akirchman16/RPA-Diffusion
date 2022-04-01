@@ -9,14 +9,14 @@ close all;
 
 N = 100;    %length of DNA lattice
 n = 3;  %length of protein
-Iterations = 1000;
+Iterations = 10000;
 
 FreeProteins(1) = 50;  %number of free proteins initially
 
 k_on = 0.1;   %kinetic rate constant for binding
 k_off = 1;  %kinetic rate constant for unbinding
 
-D = 1e3;    %Diffusion Rate
+D = 0;    %Diffusion Rate
 L_Prob = 0.5;
 R_Prob = 1-L_Prob;
 
@@ -27,6 +27,9 @@ BoundAtSpot = zeros(1,N);   %tracks where proteins are currently bound
 TotalDiffusionEvents = 0;
 LeftDiffEvents = 0;
 RightDiffEvents = 0;
+DistanceTrackers = zeros(1,N);  %array to record the distance traveled by each protein as it diffuses
+DiffusionTimers = zeros(1,N);   %array to record how long each protein is bound to the lattice
+BoundTimer = [];    %records lengths of time proteins are bound to the lattice
 for i = 1:Iterations
     % Lattice Search %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     LeftOpen = find(diff([1 DNA 1]) == -1);   %left edge of open spaces on lattice
@@ -58,6 +61,9 @@ for i = 1:Iterations
         DNA(UnbindSpot:UnbindSpot+(n-1)) = 0;   %unbind protein from lattice
         BoundAtSpot(UnbindSpot) = 0;
         FreeProteins(i+1) = FreeProteins(i)+1;
+        
+        BoundTimer = [BoundTimer,DiffusionTimers(UnbindSpot)];
+        DiffusionTimers(UnbindSpot) = 0;
     end
     
     dt(i) = (1/a_0)*log(1/rand);   %time step
@@ -120,6 +126,8 @@ for i = 1:Iterations
             end
         end
     end
+    
+    DiffusionTimers(BoundAtSpot == 1) = DiffusionTimers(BoundAtSpot == 1)+dt(i);
 end
 
 figure();
@@ -127,3 +135,7 @@ scatter(t,FracCover,3,'r','filled');
 xlabel('Time, t');  ylabel('Saturation Level');
 box on; xlim([0 max(t)]);   ylim([0 1]);
 title('Saturation of ssDNA (Single Protein)');
+
+figure();
+histogram(BoundTimer,round(sqrt(numel(BoundTimer))));
+xlabel('Bound Time');   xlim([0 inf]);
