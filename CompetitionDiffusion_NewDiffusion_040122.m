@@ -710,21 +710,43 @@ while Equilibrium ~= 1
 %     end
 
 %%% New Diffusion Method %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    LeftDiff_Only = [];
-    RightDiff_Only = [];
-    EitherDiffusable = [];
+    A_LeftDiff_Only = [];
+    A_RightDiff_Only = [];
+    A_EitherDiff = [];
+    D_LeftDiff_Only = [];
+    D_RightDiff_Only = [];
+    D_EitherDiff = [];
 
     BoundRPA_A = find(RPA_A_BoundAtSpot == 1);
     BoundRPA_D = find(RPA_D_BoundAtSpot == 1);
     HingedRPA_A = find(RPA_A_HingedOpen == 1);
     HingedRPA_D = find(RPA_D_HingedOpen == 1);
     
-    A_Closed_D_Open = BoundRPA_A(ismember(BoundRPA_A+n_A,HingedRPA_D)); %list of all bound RPA-A where RPA-D is hinged open
-    A_Closed_D_Closed = sort([BoundRPA_A(ismember(BoundRPA_A+n_A,BoundRPA_D)),BoundRPA_D(ismember(BoundRPA_D-n_A,BoundRPA_A))]);    %list of all bound RPA-A and RPA-D proteins with both sections closed
-    A_Open_D_Closed = BoundRPA_D(ismember(BoundRPA_D-n_A,HingedRPA_A)); %list of all bound RPA-D where RPA-A is hinged open
+    A_D_Open = BoundRPA_A(ismember(BoundRPA_A+n_A,HingedRPA_D));    %RPA-A proteins which are bound with RPA-D hinged open
+    A_D_Closed = BoundRPA_A(~ismember(BoundRPA_A+n_A,HingedRPA_D)); %RPA-A proteins which are bound with RPA-D hinged closed
+    D_A_Open = BoundRPA_D(ismember(BoundRPA_D-n_A,HingedRPA_A));    %RPA-D proteins which are bound with RPA-A hinged open
+    D_A_Closed = BoundRPA_D(~ismember(BoundRPA_D-n_A,HingedRPA_A)); %RPA-D proteins which are bound with RPA-A hinged closed
     
-    LeftDiff_Only = A_Closed_D_Open((A_Closed_D_Open == 1) & DNA(2,A_Closed_D_Open+n_A) == 0 & DNA(1,A_Closed_D_Open+n_RPA) == 0);  %adds first position to list of left diffusable proteins if it meets criteria
-    LeftDiff_Only = [LeftDiff_Only,A_Closed_D_Closed(DNA(2,A_Closed_D_Closed-1) == 0 & DNA(2,A_Closed_D_Closed+n_RPA) ~= 0)];
+    if ismember(1,A_D_Open) || ismember(1,A_D_Closed)   %left most position meaning right diffusion only
+        A_RightDiff_Only = 1;
+        A_D_Open(A_D_Open == 1) = [];   %clears left-most position from recording arrays
+        A_D_Closed(A_D_Closed == 1) = [];
+    end
+    if ismember(n_A+1,D_A_Open) || ismember(n_A+1,D_A_Closed)
+        D_RightDiff_Only = n_A+1;
+        D_A_Open(D_A_Open == 1) = [];   %clears left-most position from recording arrays
+        D_A_Closed(D_A_Closed == 1) = [];
+    end
+    if ismember(N-(n_RPA-1),A_D_Open) || ismember(N-(n_RPA-1),A_D_Closed)   %right most position meaning left diffusion only
+        A_RightDiff_Only = N-(n_RPA-1);
+        A_D_Open(A_D_Open == N-(n_RPA-1)) = [];   %clears right-most position from recording arrays
+        A_D_Closed(A_D_Closed == N-(n_RPA-1)) = [];
+    end
+    if ismember(N-(n_D-1),D_A_Open) || ismember(N-(n_D-1),D_A_Closed)
+        D_RightDiff_Only = N-(n_D-1);
+        D_A_Open(D_A_Open == N-(n_D-1)) = [];   %clears right-most position from recording arrays
+        D_A_Closed(D_A_Closed == N-(n_D-1)) = [];
+    end
     
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %     TotalDiffEvents = TotalDiffEvents+DiffusionEvents(Event);
