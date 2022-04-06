@@ -748,6 +748,18 @@ while Equilibrium ~= 1
         D_A_Closed(D_A_Closed == N-(n_D-1)) = [];
     end
     
+    A_RightDiff_Only = A_D_Open((DNA(2,A_D_Open-1) ~= 0) | (DNA(1,A_D_Open+(n_A-1)) ~= 0));    %list of A selected proteins that are blocked to the left (right diffusion only)
+    A_RightDiff_Only = [A_RightDiff_Only,A_D_Closed(DNA(2,A_D_Closed-1) ~= 0)];
+    A_D_Open(ismember(A_D_Open,A_RightDiff_Only)) = []; %clears proteins from lists of A selected bound proteins
+    A_D_Closed(ismember(A_D_Closed,A_RightDiff_Only)) = [];
+    A_LeftDiff_Only = A_D_Open((DNA(2,A_D_Open+n_A) ~= 0 ) | (DNA(1,A_D_Open+n_RPA) ~= 0));    %list of A selected proteins that are blocked to the right (left diffusion only)
+    A_LeftDiff_Only = [A_LeftDiff_Only,A_D_Closed(DNA(2,A_D_Closed+n_RPA) ~= 0)];
+    A_D_Open(ismember(A_D_Open,A_LeftDiff_Only)) = [];  %clears proteins from lists of A selected bound proteins
+    A_D_Closed(ismember(A_D_Closed,A_LeftDiff_Only)) = [];
+%%???%%%    A_EitherDiff = [A_D_Open((DNA(2,A_D_Open-1) == 0) & (DNA(1,A_D_Open+(n_A-1)) == 0)),A_D_Closed((DNA(2,A_D_Open+n_A) == 0 ) & (DNA(1,A_D_Open+n_RPA) == 0))];   %all other A selected proteins can diffuse in either direction
+    A_D_Open(ismember(A_D_Open,A_EitherDiff)) = [];     %clears proteins from lists of A selectd bound proteins
+    A_D_Closed(ismember(A_D_Closed,A_EitherDiff)) = [];
+    
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %     TotalDiffEvents = TotalDiffEvents+DiffusionEvents(Event);
 %     TotalLeftDiff = TotalLeftDiff+LeftDiffCounter;
