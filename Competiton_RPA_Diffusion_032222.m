@@ -34,7 +34,7 @@ k_on_RPA_D = 30;    %kinetic rate consant for RPA-D binding
 k_off_RPA_D = 10;    %kinetic rate constant for RPA-D unbinding
 
 DiffusionRate = 1e+3;    %RPA Diffusion Rate constant (events/time interval)
-Left_Prob = 0.7;    %probability of left diffusion, when both are possible (value between 0 and 1)
+Left_Prob = 0.5;    %probability of left diffusion, when both are possible (value between 0 and 1)
 Right_Prob = 1-Left_Prob;
 
 %Memory Allocation
