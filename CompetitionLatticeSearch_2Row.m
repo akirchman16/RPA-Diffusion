@@ -24,21 +24,36 @@ function [Counts,Locations] = CompetitionLatticeSearch_2Row(DNA,N,n_RAD51,n_A,n_
     RPA_GapEdges = [GapLeft(GapSizes >= n_RPA);GapRight(GapSizes >= n_RPA)];
     RAD51_Mon_GapEdges = [GapLeft(GapSizes >= n_RAD51);GapRight(GapSizes >= n_RAD51)];
     RAD51_Dim_GapEdges = [GapLeft(GapSizes >= 2*n_RAD51);GapRight(GapSizes >= 2*n_RAD51)];
+    %List every possible binding location for each protein. These will be
+    %removed from this array as we record which types they are.
+    RPA_AllLocs = [];   RAD51_Mon_AllLocs = []; RAD51_Dim_AllLocs = [];
+    for i = 1:numel(RPA_GapEdges(1,:))
+        RPA_AllLocs = [RPA_AllLocs,RPA_GapEdges(1,i):1:RPA_GapEdges(2,i)-(n_RPA-1)];
+    end
+    for j = 1:numel(RAD51_Mon_GapEdges(1,:))
+        RAD51_Mon_AllLocs = [RAD51_Mon_AllLocs,RAD51_Mon_GapEdges(1,j):1:RAD51_Mon_GapEdges(2,j)-(n_RAD51-1)];
+    end
+    for k = 1:numel(RAD51_Dim_GapEdges(2,:))
+        RAD51_Dim_AllLocs = [RAD51_Dim_AllLocs,RAD51_Dim_GapEdges(1,k):1:RAD51_Dim_GapEdges(2,k)-(2*n_RAD51-1)];
+    end
     
     %Find gaps which hold doubly contiguous binding locations - This is the
-    %easiest type of binding location to find
+    %easiest type of binding location to find (edges aren't allowed)
     RPA_DC_Locs = RPA_GapEdges(RPA_GapEdges(2,:)-RPA_GapEdges(1,:)+1 == n_RPA);
     RAD51_Mon_DC_Locs = RAD51_Mon_GapEdges(RAD51_Mon_GapEdges(2,:)-RAD51_Mon_GapEdges(1,:)+1 == n_RAD51);
     RAD51_Dim_DC_Locs = RAD51_Dim_GapEdges(RAD51_Dim_GapEdges(2,:)-RAD51_Dim_GapEdges(1,:)+1 == 2*n_RAD51);
     %Each of these DC locations needs to be bounded by a similar type of
     %protein (ex: RPA_DC needs to be bounded by RPA on left and right)
-    RPA_DC_Locs = RPA_DC_Locs((DNA(2,RPA_DC_Locs-1) == 1 || DNA(2,RPA_DC_Locs-1) == 3) && (DNA(2,RPA_DC_Locs+n_RPA) == 1 || DNA(2,RPA_DC_Locs+n_RPA) == 3));
-    RAD51_Mon_DC_Locs = RAD51_Mon_DC_Locs(DNA(2,RAD51_Mon_DC_Locs-1) == 51 && DNA(2,RAD51_Mon_DC_Locs+n_RAD51) == 51);
-    RAD51_Dim_DC_Locs = RAD51_Dim_DC_Locs(DNA(2,RAD51_Dim_DC_Locs-1) == 51 && DNA(2,RAD51_Dim_DC_Locs+(2*n_RAD51)) == 51);
+    RPA_DC_Locs = RPA_DC_Locs((DNA(2,RPA_DC_Locs-1) == 1 | DNA(2,RPA_DC_Locs-1) == 3) & (DNA(2,RPA_DC_Locs+n_RPA) == 1 | DNA(2,RPA_DC_Locs+n_RPA) == 3));
+    RAD51_Mon_DC_Locs = RAD51_Mon_DC_Locs(DNA(2,RAD51_Mon_DC_Locs-1) == 51 & DNA(2,RAD51_Mon_DC_Locs+n_RAD51) == 51);
+    RAD51_Dim_DC_Locs = RAD51_Dim_DC_Locs(DNA(2,RAD51_Dim_DC_Locs-1) == 51 & DNA(2,RAD51_Dim_DC_Locs+(2*n_RAD51)) == 51);
     
     RPA_GapEdges(ismember(RPA_DC_Locs,RPA_GapEdges(1,:))) = []; %Clear DC locations from GapEdges arrays
     RAD51_Mon_GapEdges(ismember(RAD51_Mon_DC_Locs,RAD51_Mon_GapEdges(1,:))) = [];
     RAD51_Dim_GapEdges(ismember(RAD51_Dim_DC_Locs,RAD51_Dim_GapEdges(1,:))) = [];
+    RPA_AllLocs(ismember(RPA_DC_Locs,RPA_AllLocs)) = [];    %Clears DC locations from AllLocs arrays
+    RAD51_Mon_AllLocs(ismember(RAD51_Mon_DC_Locs,RAD51_Mon_AllLocs)) = [];
+    RAD51_Dim_AllLocs(ismember(RAD51_Dim_DC_Locs,RAD51_Dim_AllLocs)) = [];
     
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     Counts = [numel(RPA_DC_Locs);numel(RAD51_Mon_DC_Locs);numel(RAD51_Dim_DC_Locs)];
