@@ -1,4 +1,4 @@
- clearvars;
+clearvars;
 close all;
 
 % This code will be a competition model between RPA and RAD51. It will run
