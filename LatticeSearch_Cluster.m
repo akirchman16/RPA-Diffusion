@@ -51,6 +51,8 @@ function [Counts,Locations] = LatticeSearch_Cluster(DNA,n_RAD51,n_A,n_D)
     RAD51_Dim_DC_Gaps = RAD51_Dim_GapEdges((ismember(RAD51_Dim_GapEdges(:,1)-1,RAD51_Edges)) & (ismember(RAD51_Dim_GapEdges(:,2)+1,RAD51_Edges)) & (RAD51_Dim_GapEdges(:,2)-RAD51_Dim_GapEdges(:,1)+1 == 2*n_RAD51),:);
     %Now record the actual binding sites (left edge of the gap)
     RPA_DC_Sites = RPA_DC_Gaps(:,1);    RAD51_Mon_DC_Sites = RAD51_Mon_DC_Gaps(:,1);    RAD51_Dim_DC_Sites = RAD51_Dim_DC_Gaps(:,1);
+    %Clear DC edges from the array of all gap edges for each protein
+    RPA_GapEdges(ismember(RPA_GapEdges(:,1),RPA_DC_Sites),:) = [];  RAD51_Mon_GapEdges(ismember(RAD51_Mon_GapEdges(:,1),RAD51_Mon_DC_Sites),:) = [];    RAD51_Dim_GapEdges(ismember(RAD51_Dim_GapEdges(:,1),RAD51_Dim_DC_Sites),:) = [];
     
 % Now look into Singly Contiguous Sites!
     %A site is Singly Contiguous if the gap size is greater than or equal
@@ -59,10 +61,14 @@ function [Counts,Locations] = LatticeSearch_Cluster(DNA,n_RAD51,n_A,n_D)
     RPA_SC_Gaps = RPA_GapEdges(xor(ismember(RPA_GapEdges(:,1)-1,RPA_Edges),ismember(RPA_GapEdges(:,2)+1,RPA_Edges)) & (RPA_GapEdges(:,2)-RPA_GapEdges(:,1)+1 >= n_RPA),:);
     RAD51_Mon_SC_Gaps = RAD51_Mon_GapEdges(xor(ismember(RAD51_Mon_GapEdges(:,1)-1,RAD51_Edges),ismember(RAD51_Mon_GapEdges(:,2)+1,RAD51_Edges)) & (RAD51_Mon_GapEdges(:,2)-RAD51_Mon_GapEdges(:,1)+1 >= n_RAD51),:);
     RAD51_Dim_SC_Gaps = RAD51_Dim_GapEdges(xor(ismember(RAD51_Dim_GapEdges(:,1)-1,RAD51_Edges),ismember(RAD51_Dim_GapEdges(:,2)+1,RAD51_Edges)) & (RAD51_Dim_GapEdges(:,2)-RAD51_Dim_GapEdges(:,1)+1 >= 2*n_RAD51),:);
-    %Now record the actual binding sites (left edge of the gap)
-    %**% RPA_SC_Sites = RPA_SC_Gaps(:,1);    RAD51_Mon_SC_Sites = RAD51_Mon_SC_Gaps(:,1);    RAD51_Dim_SC_Sites = RAD51_Dim_SC_Gaps(:,1);
+    %Now record the actual binding sites
+    RPA_SC_Sites = RPA_SC_Gaps(ismember(RPA_SC_Gaps(:,1)-1,RPA_Edges),1);   RPA_SC_Sites = sort([RPA_SC_Sites,RPA_SC_Gaps(ismember(RPA_SC_Gaps(:,2)+1,RPA_Edges),2)-(n_RPA-1)]);
+    RAD51_Mon_SC_Sites = RAD51_Mon_SC_Gaps(ismember(RAD51_Mon_SC_Gaps(:,1)-1,RAD51_Edges),1);   RAD51_Mon_SC_Sites = sort([RAD51_Mon_SC_Sites,RAD51_Mon_SC_Gaps(ismember(RAD51_Mon_SC_Gaps(:,2)+1,RAD51_Edges),2)-(n_RAD51-1)]);
+    RAD51_Dim_SC_Sites = RAD51_Dim_SC_Gaps(ismember(RAD51_Dim_SC_Gaps(:,1)-1,RAD51_Edges),1);   RAD51_Dim_SC_Sites = sort([RAD51_Dim_SC_Sites,RAD51_Dim_SC_Gaps(ismember(RAD51_Dim_SC_Gaps(:,2)+1,RAD51_Edges),2)-(2*n_RAD51-1)]);
     
 % Finally, we have to look at Isolated Sites!
     %Isolated sites are all other possible binding sites that aren't
-    %considered Doubly Contiguous or Singly Contiguous.
+    %considered Doubly Contiguous or Singly Contiguous. Therefore, the gaps
+    %are all of the leftover gaps that haven't been recorded as singly or
+    %doubly contiguous gaps.
 end
